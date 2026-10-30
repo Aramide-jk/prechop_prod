@@ -1,0 +1,34 @@
+import { test, expect } from '@playwright/test';
+
+test('wallet filters and details agree with the sample ledger', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/');
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Wallet', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your wallet.' })).toBeVisible();
+  await expect(page.locator('.wallet-balance-value')).toContainText('1,500');
+  await expect(page.locator('.wallet-transaction')).toHaveCount(4);
+  await page.screenshot({ path: 'test-results/mealhr-wallet-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: 'Refunds', exact: true }).click();
+  await expect(page.locator('.wallet-transaction')).toHaveCount(2);
+  await page.getByRole('button', { name: 'View transaction DEMO-W003' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'Refund received.' })).toBeVisible();
+  await expect(dialog.locator('.wallet-detail-amount')).toContainText('3,200');
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+  await page.getByRole('button', { name: 'Credit used', exact: true }).click();
+  await expect(page.locator('.wallet-transaction')).toHaveCount(2);
+  await page.getByRole('button', { name: 'View transaction DEMO-W004' }).click();
+  await expect(dialog).toContainText('1,700');
+  await expect(dialog).toContainText('1,500');
+  await dialog.getByRole('button', { name: 'Back to wallet' }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'All activity', exact: true }).click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/mealhr-wallet-mobile.png', fullPage: true });
+  await page.getByLabel('Preview empty wallet').check();
+  await expect(page.locator('.wallet-balance-value')).toHaveText('₦0');
+  await expect(page.getByRole('heading', { name: 'Your wallet starts here.' })).toBeVisible();
+  await page.getByLabel('Preview empty wallet').uncheck();
+  await expect(page.locator('.wallet-transaction')).toHaveCount(4);
+});

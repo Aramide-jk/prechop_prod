@@ -1,0 +1,37 @@
+import { test, expect } from '@playwright/test';
+
+test('orders show the right tracking state and reveal codes only during preparation', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/');
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Orders' }).click();
+  await expect(page.getByRole('heading', { name: 'Your meals are on their way.' })).toBeVisible();
+  await expect(page.locator('.order-card')).toHaveCount(3);
+  await page.screenshot({ path: 'test-results/mealhr-orders-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: 'View delivery DEMO-104' }).click();
+  await expect(page.locator('.plate-code')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Change address', exact: true }).click();
+  await page.getByLabel('Address & landmark').fill('Faculty of Engineering, side entrance · ABU Samaru');
+  await page.getByRole('button', { name: 'Save address' }).click();
+  await expect(page.locator('.order-delivery-info')).toContainText('side entrance');
+  await page.getByRole('button', { name: 'Cancel delivery', exact: true }).click();
+  await page.getByRole('button', { name: 'Keep my delivery' }).click();
+  await expect(page.getByRole('heading', { name: 'Your meal is on the calendar.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel delivery', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm preview cancellation' }).click();
+  await expect(page.getByRole('heading', { name: 'This delivery was cancelled.' })).toBeVisible();
+  await page.getByRole('button', { name: 'All deliveries' }).click();
+  await page.getByRole('button', { name: 'Cancelled', exact: true }).click();
+  await expect(page.locator('.order-card')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Upcoming', exact: true }).click();
+  await page.getByRole('button', { name: 'View delivery DEMO-103' }).click();
+  await expect(page.locator('.plate-code')).toHaveCount(2);
+  await expect(page.locator('.plate-code').first()).toContainText('1001');
+  await expect(page.getByRole('button', { name: 'Cancel delivery', exact: true })).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/mealhr-tracking-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/mealhr-tracking-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: 'All deliveries' }).click();
+  await page.getByRole('button', { name: 'Delivered', exact: true }).click();
+  await expect(page.locator('.order-card')).toHaveCount(1);
+});

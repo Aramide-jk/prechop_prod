@@ -1,0 +1,52 @@
+import { test, expect } from '@playwright/test';
+test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date('2026-09-30T06:00:00Z')); });
+
+test('customer can customise, edit and restore plates across dates', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Add Smoky jollof rice', exact: true }).click();
+  const modal = page.getByRole('dialog');
+  await modal.getByRole('radio', { name: 'Chicken' }).check();
+  await modal.getByRole('button', { name: 'Continue to extras' }).click();
+  await modal.getByRole('button', { name: 'Add one chicken', exact: true }).click();
+  await modal.getByRole('button', { name: 'Add one bottled water' }).click();
+  await expect(modal.getByRole('button', { name: /Add to cart/ })).toContainText('3,400');
+  await modal.getByRole('button', { name: /Add to cart/ }).click();
+  const cart = page.getByRole('complementary');
+  await expect(cart).toContainText('3,400');
+  await page.reload();
+  await expect(cart).toContainText('3,400');
+  await cart.getByRole('button', { name: 'Edit plate' }).click();
+  await modal.getByRole('radio', { name: 'No protein' }).check();
+  await modal.getByRole('button', { name: 'Continue to extras' }).click();
+  await modal.getByRole('button', { name: /Save changes/ }).click();
+  await expect(cart).toContainText('2,600');
+  await page.locator('.date-strip button').nth(1).click();
+  await page.getByRole('button', { name: 'Dinner', exact: true }).click();
+  await page.getByRole('button', { name: 'Add Beans & plantain', exact: true }).click();
+  await modal.getByRole('button', { name: 'Continue to extras' }).click();
+  await modal.getByRole('button', { name: /Add to cart/ }).click();
+  await expect(cart).toContainText('2 plates');
+  await expect(cart).toContainText('4,400');
+  await page.screenshot({ path: 'test-results/mealhr-desktop.png', fullPage: true });
+  await cart.getByRole('button', { name: 'Review your order' }).click();
+  await expect(modal).toContainText('Choose where and when');
+  await page.keyboard.press('Escape');
+  await expect(modal).not.toBeVisible();
+});
+
+test('mobile menu has no horizontal overflow and supports cart removal', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Add Yam & egg sauce', exact: true }).click();
+  const modal = page.getByRole('dialog');
+  await modal.getByRole('button', { name: 'Continue to extras' }).click();
+  await page.screenshot({ path: 'test-results/mealhr-mobile-extras.png', fullPage: true });
+  await modal.getByRole('button', { name: /Add to cart/ }).click();
+  await expect(page.getByRole('button', { name: /View cart/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/mealhr-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: /View cart/ }).click();
+  await modal.getByRole('button', { name: 'Remove Yam & egg sauce' }).click();
+  await expect(modal).toContainText('What sounds good?');
+});
