@@ -4,6 +4,7 @@ import { CampaignAnnouncement } from "@/components/campaign-announcement";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./sign-in.css";
+import "./menu.css";
 import "./payment.css";
 import "./orders.css";
 import "./wallet.css";
@@ -13,6 +14,7 @@ import "./skeletons.css";
 import "./campaign.css";
 import "./admin.css";
 import "./admin-dashboard.css";
+import "./legal.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

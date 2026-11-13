@@ -43,9 +43,8 @@ export function WalletPage() {
     async function load() {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) { if (active) { setError("Supabase is not configured."); setLoading(false); } return; }
-      const { data: auth, error: authError } = await supabase.auth.getUser();
-      if (authError) { if (active) { setError(authError.message); setLoading(false); } return; }
-      if (!auth.user) { if (active) { setSignedIn(false); setLedger([]); setLoading(false); } return; }
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) { if (active) { setSignedIn(false); setLedger([]); setLoading(false); } return; }
       if (active) setSignedIn(true);
       const { error: releaseError } = await supabase.rpc("release_expired_customer_wallet_credits");
       const { data, error: ledgerError } = await supabase.from("wallet_entries").select("id,order_id,kind,amount_ngn,description,created_at,orders(payment_reference)").eq("customer_id", auth.user.id).order("created_at", { ascending: true });

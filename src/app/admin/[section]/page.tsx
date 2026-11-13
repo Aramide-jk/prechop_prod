@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminModulePage, type AdminModuleKey } from "@/components/admin-module-page";
 
 const sections = new Set<AdminModuleKey>([
-  "menus", "meals", "add-ons", "batches", "orders", "deliveries", "refunds", "areas", "settings",
+  "menus", "meals", "add-ons", "batches", "orders", "deliveries", "refunds", "areas", "settings", "audit-log",
 ]);
 
 export default async function AdminSectionPage({ params }: PageProps<"/admin/[section]">) {

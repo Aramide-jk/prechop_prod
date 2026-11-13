@@ -1,84 +1,306 @@
 /* Larger type gets space to wrap, including on small screens. */
-:root { --muted: #666b61; }
-.cart-line { flex-wrap: wrap; row-gap: 4px; }
-.cart-group h3 { flex-wrap: wrap; }
-.cart-hint { align-items: flex-start; }
-.meal-description { min-height: 82px; }
-.date-strip button { min-height: 92px; }
-.date-strip small { margin-top: 4px; }
-.stock { flex-wrap: wrap; row-gap: 6px; }
-.protein-hint { margin-left: 0; width: 100%; }
-.primary, .modal .primary { font-size: 16px; min-height: 52px; }
-.extra-row { gap: 18px; }
-.extra-row > div:first-child { min-width: 0; }
-.stepper { flex-shrink: 0; }
-.stepper button { width: 40px; height: 42px; }
-.stepper output { min-width: 28px; }
-.checkout-plate { align-items: flex-start; }
-.checkout-plate > strong { margin-left: auto; }
-.checkout-steps { row-gap: 16px; flex-wrap: wrap; }
-.checkout-steps li > span { line-height: 16px; }
-.menu-context { align-items: flex-start; }
-.menu-context span:last-child { white-space: nowrap; }
-.sign-in-modal { width: min(540px, calc(100% - 32px)); padding: 44px; max-height: 92dvh; }
-.signin-symbol { width: 58px; height: 58px; display: grid; place-items: center; background: #f7e8da; color: var(--orange); border-radius: 12px; margin-bottom: 26px; }
-.sign-in-modal h2 { font-size: 38px; line-height: 1.14; margin: 14px 0 18px; outline: none; }
-.signin-intro { font-size: 16px; line-height: 1.75; color: var(--muted); }
-.signin-progress { display: flex; justify-content: space-between; gap: 16px; list-style: none; margin: 28px 0 32px; padding: 0 0 23px; border-bottom: 1px solid var(--line); }
-.signin-progress li { display: flex; align-items: center; gap: 7px; font-size: 14px; color: var(--muted); }
-.signin-progress li > span { width: 25px; height: 25px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; font-size: 12px; }
-.signin-progress li[aria-current] { color: var(--orange); }
-.signin-progress li[aria-current] > span { background: var(--orange); color: white; border-color: var(--orange); }
-.sign-in-modal form > label { display: block; font-size: 16px; font-weight: 500; margin: 0 0 11px; }
-.sign-in-modal form input { font: inherit; font-size: 18px; width: 100%; min-width: 0; padding: 15px; border: 1px solid #bfc4b8; border-radius: 5px; background: #fffefa; color: var(--foreground); min-height: 56px; }
-.phone-field { display: flex; align-items: center; border: 1px solid #bfc4b8; border-radius: 5px; background: #fffefa; }
-.phone-field > span { font-size: 14px; padding: 0 18px; border-right: 1px solid var(--line); color: var(--muted); }
-.sign-in-modal .phone-field input { border: 0; background: transparent; }
-.sign-in-modal .code-field { font-size: 30px; letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; }
-.signin-help { font-size: 14px; color: var(--muted); margin-top: 12px; line-height: 1.7; }
-.code-actions { display: flex; justify-content: space-between; gap: 15px; margin: 22px 0; font-size: 14px; color: var(--orange); }
-.code-actions button { min-height: 40px; text-decoration: underline; text-underline-offset: 4px; }
-.sign-in-modal .error:empty { display: none; }
-.sign-in-modal .error { font-size: 14px; margin: 16px 0; }
-.sign-in-modal form > .primary { margin-top: 28px; }
-.signin-preview { font-size: 13px; line-height: 1.7; color: var(--muted); margin: 23px 0; }
-.signin-back { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; font-size: 14px; color: var(--orange); }
-.phone-confirmed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #edf3ec; padding: 14px; margin-bottom: 24px; color: #346538; font-size: 14px; }
-.phone-confirmed > span { font-size: 12px; margin-left: auto; }
+:root {
+  --muted: #666b61;
+}
+.cart-line {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.cart-group h3 {
+  flex-wrap: wrap;
+}
+.cart-hint {
+  align-items: flex-start;
+}
+.stock {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+.protein-hint {
+  margin-left: 0;
+  width: 100%;
+}
+.primary,
+.modal .primary {
+  font-size: 16px;
+  min-height: 52px;
+}
+.extra-row {
+  gap: 18px;
+}
+.extra-row > div:first-child {
+  min-width: 0;
+}
+.stepper {
+  flex-shrink: 0;
+}
+.stepper button {
+  width: 40px;
+  height: 42px;
+}
+.stepper output {
+  min-width: 28px;
+}
+.checkout-plate {
+  align-items: flex-start;
+}
+.checkout-plate > strong {
+  margin-left: auto;
+}
+.checkout-steps {
+  row-gap: 16px;
+  flex-wrap: wrap;
+}
+.checkout-steps li > span {
+  line-height: 16px;
+}
+.menu-context {
+  align-items: flex-start;
+}
+.menu-context span:last-child {
+  white-space: nowrap;
+}
+.sign-in-modal {
+  width: min(540px, calc(100% - 32px));
+  padding: 44px;
+  max-height: 92dvh;
+}
+.signin-symbol {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  background: #f7e8da;
+  color: var(--orange);
+  border-radius: 12px;
+  margin-bottom: 26px;
+}
+.sign-in-modal h2 {
+  font-size: 38px;
+  line-height: 1.14;
+  margin: 14px 0 18px;
+  outline: none;
+}
+.signin-intro {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+.signin-progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  list-style: none;
+  margin: 28px 0 32px;
+  padding: 0 0 23px;
+  border-bottom: 1px solid var(--line);
+}
+.signin-progress li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.signin-progress li > span {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 12px;
+}
+.signin-progress li[aria-current] {
+  color: var(--orange);
+}
+.signin-progress li[aria-current] > span {
+  background: var(--orange);
+  color: white;
+  border-color: var(--orange);
+}
+.sign-in-modal form > label {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 11px;
+}
+.sign-in-modal form input {
+  font: inherit;
+  font-size: 18px;
+  width: 100%;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #bfc4b8;
+  border-radius: 5px;
+  background: #fffefa;
+  color: var(--foreground);
+  min-height: 56px;
+}
+.phone-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid #bfc4b8;
+  border-radius: 5px;
+  background: #fffefa;
+}
+.phone-field > span {
+  font-size: 14px;
+  padding: 0 18px;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+}
+.sign-in-modal .phone-field input {
+  border: 0;
+  background: transparent;
+}
+.sign-in-modal .code-field {
+  font-size: 30px;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.signin-help {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 12px;
+  line-height: 1.7;
+}
+.code-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 22px 0;
+  font-size: 14px;
+  color: var(--orange);
+}
+.code-actions button {
+  min-height: 40px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.sign-in-modal .error:empty {
+  display: none;
+}
+.sign-in-modal .error {
+  font-size: 14px;
+  margin: 16px 0;
+}
+.sign-in-modal form > .primary {
+  margin-top: 28px;
+}
+.signin-preview {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 23px 0;
+}
+.signin-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--orange);
+}
+.phone-confirmed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  background: #edf3ec;
+  padding: 14px;
+  margin-bottom: 24px;
+  color: #346538;
+  font-size: 14px;
+}
+.phone-confirmed > span {
+  font-size: 12px;
+  margin-left: auto;
+}
 @media (min-width: 851px) and (max-width: 1100px) {
-  .menu-layout { grid-template-columns: minmax(0,1fr) 300px; gap: 25px; }
-  .meal-grid { grid-template-columns: 1fr; }
+  .menu-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 25px;
+  }
+  .meal-grid {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 600px) {
-  .header-location { display: none; }
-  .section-heading { flex-wrap: wrap; gap: 12px; }
-  .hero { min-height: 540px; }
-  .hero-copy { width: 100%; }
-  .hero .eyebrow { font-size: 12px; }
-  .hero p { font-size: 16px; }
-  .date-strip { gap: 4px; }
-  .date-strip button { min-height: 90px; }
-  .date-strip button span { font-size: 13px; }
-  .date-strip small { font-size: 10px; }
-  .meal-description { min-height: 0; }
-  .menu-context { flex-wrap: wrap; }
-  .menu-context span { font-size: 14px; }
-  .mobile-cart { font-size: 14px; }
-  .mobile-cart > svg:first-child { display: none; }
-  .modal-tabs { gap: 15px; }
-  .modal-tabs button { font-size: 14px; }
-  .modal-actions { flex-wrap: wrap; }
-  .modal-actions .primary { flex: 1; min-width: 220px; }
-  .checkout-plate { display: grid; grid-template-columns: 60px minmax(0,1fr); }
-  .checkout-plate > strong { grid-column: 2; margin-left: 0; }
-  .checkout-steps li { font-size: 13px; }
-  .checkout-steps { gap: 12px; }
-  .delivery-card-heading { flex-wrap: wrap; }
-  .delivery-times label { font-size: 15px; }
-  .sign-in-modal { padding: 34px 24px; width: calc(100% - 24px); }
-  .sign-in-modal h2 { font-size: 34px; }
-  .signin-progress { gap: 10px; }
-  .signin-progress li { font-size: 13px; }
-  .signin-progress li > span { width: 23px; height: 23px; }
-  .mobile-nav button { font-size: 12px; }
+  .header-location {
+    display: none;
+  }
+  .section-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hero {
+    min-height: 540px;
+  }
+  .hero-copy {
+    width: 100%;
+  }
+  .hero .eyebrow {
+    font-size: 12px;
+  }
+  .hero p {
+    font-size: 16px;
+  }
+  .menu-context {
+    flex-wrap: wrap;
+  }
+  .menu-context span {
+    font-size: 14px;
+  }
+  .mobile-cart {
+    font-size: 14px;
+  }
+  .mobile-cart > svg:first-child {
+    display: none;
+  }
+  .modal-tabs {
+    gap: 15px;
+  }
+  .modal-tabs button {
+    font-size: 14px;
+  }
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+  .modal-actions .primary {
+    flex: 1;
+    min-width: 220px;
+  }
+  .checkout-steps li {
+    font-size: 13px;
+  }
+  .checkout-steps {
+    gap: 12px;
+  }
+  .delivery-times label {
+    font-size: 15px;
+  }
+  .sign-in-modal {
+    padding: 34px 24px;
+    width: calc(100% - 24px);
+  }
+  .sign-in-modal h2 {
+    font-size: 34px;
+  }
+  .signin-progress {
+    gap: 10px;
+  }
+  .signin-progress li {
+    font-size: 13px;
+  }
+  .signin-progress li > span {
+    width: 23px;
+    height: 23px;
+  }
+  .mobile-nav button {
+    font-size: 12px;
+  }
 }

@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowClockwise, ArrowRight, CaretLeft, CaretRight, Check, Clock, CookingPot, ForkKnife,
-  Package, Phone, Receipt, Truck, WarningCircle,
+  Package, Phone, Printer, Receipt, Truck, WarningCircle,
 } from "@phosphor-icons/react";
 import { SignInDialog } from "@/components/sign-in";
+import { formatPackCode } from "@/lib/delivery-code";
 
 type Batch = {
   id: string; name: string; window: string; starts_at: string; ends_at: string;
@@ -122,7 +123,10 @@ export function AdminDashboard() {
   return <main className="admin-dashboard-page">
     <header className="admin-dashboard-heading">
       <div><span className="eyebrow">PRECHOP ADMIN · {formatDate(data.service_date, { weekday: "long" }).toUpperCase()}</span><h1>Today, at a glance.</h1><p>Daily kitchen and delivery operations for {formatDate(data.service_date, { day: "numeric", month: "long", year: "numeric" })}.</p></div>
-      <button className="admin-refresh" onClick={() => void load(selectedBatchId || undefined, true)} disabled={loading || refreshing}><ArrowClockwise size={18} className={refreshing ? "admin-refresh-spin" : undefined} /> Refresh</button>
+      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        {selectedBatch && <button className="admin-action-button" type="button" onClick={() => window.print()} title="Print kitchen prep & delivery sheet"><Printer size={17} /> Print sheet</button>}
+        <button className="admin-refresh" onClick={() => void load(selectedBatchId || undefined, true)} disabled={loading || refreshing}><ArrowClockwise size={18} className={refreshing ? "admin-refresh-spin" : undefined} /> Refresh</button>
+      </div>
     </header>
 
     {error && <p className="error admin-report-error" role="alert">{error}</p>}
@@ -150,7 +154,7 @@ export function AdminDashboard() {
       </article>
       <article className="admin-section admin-packing-card"><div className="admin-section-heading"><div><span className="eyebrow">PACKING & DELIVERY</span><h2>Delivery list</h2></div><span className="admin-muted">{data.deliveries.length} stops</span></div>
         {data.deliveries.length ? <div className="admin-delivery-list">{data.deliveries.map((delivery, index) => <section className="admin-delivery-row" key={delivery.id}><div className="admin-delivery-top"><span className="admin-delivery-index">{String(index + 1).padStart(2, "0")}</span><div className="admin-delivery-customer"><strong>{delivery.customer_name || "PreChop customer"}</strong><span>{delivery.area}</span></div>{delivery.phone && <a className="admin-call-link" href={`tel:${delivery.phone}`} aria-label={`Call ${delivery.customer_name || "customer"}`}><Phone size={17} /> Call</a>}</div><p className="admin-delivery-address">{delivery.address}</p>
-          <div className="admin-plate-tags">{delivery.plates.map((plate, plateIndex) => <span className="admin-plate-tag" key={`${delivery.id}-${plateIndex}`}><Package size={15} /><span><strong>{plate.sticker_id ? `DELIVERY CODE · ${plate.sticker_id}` : "Sticker pending"}</strong>{plate.meal}{plate.protein ? ` · ${plate.protein}` : " · no protein"}</span></span>)}</div>
+          <div className="admin-plate-tags">{delivery.plates.map((plate, plateIndex) => <span className="admin-plate-tag" key={`${delivery.id}-${plateIndex}`}><Package size={15} /><span><strong>{plate.sticker_id ? `PACK CODE · ${formatPackCode(plate.sticker_id)}` : "Code assigned at prep"}</strong>{plate.meal}{plate.protein ? ` · ${plate.protein}` : " · no protein"}</span></span>)}</div>
           {delivery.plates.some(plate => plate.extras?.length) && <p className="admin-delivery-extras">Extras: {delivery.plates.flatMap(plate => plate.extras ?? []).map(extra => `${extra.name ?? extra.extra_name ?? "Extra"}${extra.quantity && extra.quantity > 1 ? ` ×${extra.quantity}` : ""}`).join(", ")}</p>}
           {delivery.status === "out_for_delivery" && <button className="admin-delivered-button" disabled={!!actionBusy} onClick={() => void runAction("mark_delivered", { deliveryId: delivery.id }, `${delivery.customer_name || "Delivery"} marked delivered.`)}>{actionBusy === `mark_delivered${delivery.id}` ? "Saving…" : <>Mark delivered <Check size={16} /></>}</button>}
         </section>)}</div> : <div className="admin-empty-panel compact"><Truck size={21} /><p>No confirmed deliveries in this batch.</p></div>}

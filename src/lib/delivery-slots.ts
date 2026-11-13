@@ -5,6 +5,21 @@ export const slots: Record<WindowName, { id: string; label: string; cutoff: stri
   Lunch: [{ id: "lunch-1", label: "12:00–2:00 PM", cutoff: "10:00" }],
   Dinner: [{ id: "dinner-1", label: "6:00–7:00 PM", cutoff: "16:00" }],
 };
-export function windowClosed(date: string, window: WindowName, now: number) {
-  return !!date && slots[window].every(slot => now >= Date.parse(`${date}T${slot.cutoff}:00+01:00`));
+
+export function windowClosed(
+  date: string,
+  window: WindowName,
+  now: number,
+  customCutoffs?: string[],
+) {
+  if (!date) return false;
+  const cutoffs =
+    customCutoffs !== undefined
+      ? customCutoffs
+      : slots[window].map((slot) => slot.cutoff);
+  if (cutoffs.length === 0) return true;
+  return cutoffs.every((cutoff) => {
+    const hhmm = cutoff.slice(0, 5);
+    return now >= Date.parse(`${date}T${hhmm}:00+01:00`);
+  });
 }

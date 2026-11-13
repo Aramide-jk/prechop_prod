@@ -47,11 +47,25 @@ Browser tests use installed Microsoft Edge and start an isolated production serv
 
 1. Create a Supabase project and copy `.env.example` to `.env.local`.
 2. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from the Supabase project API settings. The publishable key is protected by row-level security; never put a service-role key in a `NEXT_PUBLIC_` variable.
-3. Run [`supabase/migrations/202609300001_customer_core.sql`](supabase/migrations/202609300001_customer_core.sql), then [`supabase/migrations/202609300002_customer_address_defaults.sql`](supabase/migrations/202609300002_customer_address_defaults.sql), in the Supabase SQL Editor. If both have already been applied, skip this step.
+3. Run the migrations in `supabase/migrations/` sequentially in the Supabase SQL Editor:
+   - `202609300001_customer_core.sql`
+   - `202609300002_customer_address_defaults.sql`
+   - `202610010001_customer_orders_paystack.sql`
+   - `202610050001_kitchen_and_deliveries.sql`
+   - `202610060001_admin_dashboard_rpcs.sql`
+   - `202610060002_order_detail_view.sql`
+   - `202610060003_abandoned_payments.sql`
+   - `202610060004_fix_admin_dashboard_aggregates.sql`
+   - `202610060005_fix_today_deliveries_filter.sql`
+   - `202610060006_admin_operations_and_fixes.sql` (Order status sync, Admin refund & delivery resolution, Multi-batch meal association)
+   - `202610060007_full_control_app_settings.sql` (Full-control store operations, emergency kitchen pause, custom contacts, free delivery threshold, and ordering constraints)
+   - `202610060008_audit_logs_and_site_analytics.sql` (Comprehensive admin audit trail and privacy-first daily visitor & order analytics)
+   - `202610060009_campaign_active_enforcement.sql` (Strict campaign active state enforcement for referral attribution and reward generation)
 4. Enable phone sign-in in Supabase Auth. To deliver OTP through TextBee, deploy `supabase/functions/send-sms-hook` with the Supabase CLI. Set `TEXTBEE_API_KEY` and `SEND_SMS_HOOK_SECRET` as Edge Function secrets. In **Authentication → Hooks**, configure **Send SMS** as an HTTP hook pointing to `https://<project-ref>.supabase.co/functions/v1/send-sms-hook` with the matching signing secret. The function verifies Supabase's signed webhook before forwarding the OTP to TextBee. Keep both values out of browser-visible environment variables.
-5. Restart `npm run dev` and test with a phone you control. Supabase's Send SMS hook replaces its built-in SMS sender, and TextBee needs an online Android device attached to deliver messages.
+5. Transactional customer updates (order confirmation, kitchen preparation sticker codes, dispatch, cancellations) use `src/lib/notifications.ts` via TextBee SMS and direct WhatsApp links.
+6. Restart `npm run dev` and test with a phone you control. Supabase's Send SMS hook replaces its built-in SMS sender, and TextBee needs an online Android device attached to deliver messages.
 
-The first migration seeds starter meals, options, delivery areas, breakfast batches and a 14-day menu. Change these sample records before taking real orders. Checkout can select a different saved address for each delivery. Checkout payment, actual orders, stock reservation, order tracking and wallet actions remain previews.
+The migrations seed starter meals, options, delivery areas, breakfast batches and a 14-day menu. Checkout can select a different saved address for each delivery. Checkout payment, actual orders, stock reservation, order tracking and wallet actions seamlessly connect to Supabase and Paystack when credentials are provided, or operate in high-fidelity preview mode when offline.
 
 ## Next implementation
 

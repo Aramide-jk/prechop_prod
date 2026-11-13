@@ -24,6 +24,9 @@ export type CustomerMenu = {
   meals: Meal[];
   addons: AddOn[];
   availability: Record<string, string[]>;
+  cutoffsBySlot: Record<string, string[]>;
+  mealCutoffsBySlot: Record<string, string[]>;
+  defaultCutoffsByWindow: Record<WindowName, string[]>;
 };
 
 const windowLabels: Record<MenuRow["window"], WindowName> = {
@@ -41,16 +44,42 @@ export async function getCustomerMenu(serviceDate: string, days = 7): Promise<Cu
     const supabase = createClient(url, anonKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    const [{ data, error }, { data: addonImages }] = await Promise.all([
+    const [{ data, error }, { data: addonImages }, { data: batchRows }] = await Promise.all([
       supabase.rpc("get_customer_menu", {
         p_service_date: serviceDate,
         p_days: days,
       }),
       supabase.from("add_on_catalog").select("slug,image_url").eq("active", true),
+      supabase
+        .from("delivery_batches")
+        .select("cutoff_time,delivery_windows!inner(window,active)")
+        .eq("active", true)
+        .eq("delivery_windows.active", true),
     ]);
     if (error || !data) {
       console.error("Customer menu query failed:", error?.message ?? "No data returned");
       return null;
+    }
+
+    const defaultCutoffsByWindow: Record<WindowName, string[]> = {
+      Breakfast: [],
+      Lunch: [],
+      Dinner: [],
+    };
+    type BatchRow = {
+      cutoff_time: string;
+      delivery_windows: { window: MenuRow["window"]; active: boolean } | { window: MenuRow["window"]; active: boolean }[];
+    };
+    for (const batch of (batchRows ?? []) as unknown as BatchRow[]) {
+      const winObj = Array.isArray(batch.delivery_windows)
+        ? batch.delivery_windows[0]
+        : batch.delivery_windows;
+      const wName = winObj?.window ? windowLabels[winObj.window] : undefined;
+      if (!wName || !batch.cutoff_time) continue;
+      const hhmm = batch.cutoff_time.slice(0, 5);
+      if (!defaultCutoffsByWindow[wName].includes(hhmm)) {
+        defaultCutoffsByWindow[wName].push(hhmm);
+      }
     }
 
     const rows = data as unknown as MenuRow[];
@@ -58,6 +87,8 @@ export async function getCustomerMenu(serviceDate: string, days = 7): Promise<Cu
     const mealsBySlug = new Map<string, Meal>();
     const addonsBySlug = new Map<string, AddOn>();
     const availability: CustomerMenu["availability"] = {};
+    const cutoffsBySlot: Record<string, string[]> = {};
+    const mealCutoffsBySlot: Record<string, string[]> = {};
 
     for (const row of rows) {
       const meal = mealsBySlug.get(row.slug) ?? {
@@ -72,7 +103,10 @@ export async function getCustomerMenu(serviceDate: string, days = 7): Promise<Cu
         proteins: [],
         extras: [],
       };
-      meal.stockByDate![row.service_date] = row.stock_remaining;
+      meal.stockByDate![row.service_date] = Math.max(
+        meal.stockByDate?.[row.service_date] ?? 0,
+        row.stock_remaining,
+      );
       for (const addon of [...(row.proteins ?? []), ...(row.extras ?? [])]) {
         addonsBySlug.set(addon.slug, {
           id: addon.slug,
@@ -89,14 +123,26 @@ export async function getCustomerMenu(serviceDate: string, days = 7): Promise<Cu
       meal.extras = Array.from(new Set([...meal.extras, ...(row.extras ?? []).map(item => item.slug)]));
       mealsBySlug.set(row.slug, meal);
 
-      const key = `${row.service_date}|${windowLabels[row.window]}`;
-      availability[key] = [...(availability[key] ?? []), row.slug];
+      const wLabel = windowLabels[row.window];
+      const key = `${row.service_date}|${wLabel}`;
+      availability[key] = Array.from(new Set([...(availability[key] ?? []), row.slug]));
+
+      const rowCutoffs = Array.from(
+        new Set((row.batches ?? []).map((b) => String(b.cutoff ?? "").slice(0, 5)).filter(Boolean)),
+      );
+      if (rowCutoffs.length) {
+        cutoffsBySlot[key] = Array.from(new Set([...(cutoffsBySlot[key] ?? []), ...rowCutoffs]));
+        mealCutoffsBySlot[`${key}|${row.slug}`] = rowCutoffs;
+      }
     }
 
     return {
       meals: [...mealsBySlug.values()],
       addons: [...addonsBySlug.values()],
       availability,
+      cutoffsBySlot,
+      mealCutoffsBySlot,
+      defaultCutoffsByWindow,
     };
   } catch (error) {
     console.error("Could not connect to Supabase for the customer menu:", error);

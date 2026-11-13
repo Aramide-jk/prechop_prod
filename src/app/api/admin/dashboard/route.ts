@@ -43,14 +43,142 @@ export async function POST(request: Request) {
   try {
     const client = await getAdminClient();
     if ("response" in client) return client.response;
-    const body = await request.json() as { action?: string; batchId?: string; deliveryId?: string };
+    const body = await request.json() as {
+      action?: string;
+      batchId?: string;
+      deliveryId?: string;
+      refundMethod?: string;
+      reason?: string;
+      refundId?: string;
+      resolution?: string;
+      notes?: string;
+      stockPoolId?: string;
+      address?: string;
+      areaName?: string;
+    };
     let result;
     if (body.action === "start_preparing" && body.batchId && uuid.test(body.batchId)) {
       result = await client.supabase.rpc("admin_start_delivery_batch", { p_batch_id: body.batchId });
+      if (!result.error) {
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "batches",
+          p_action: "start_preparing",
+          p_entity_id: body.batchId,
+          p_details: `Batch ${body.batchId.slice(0, 8)} marked as preparing in kitchen.`
+        });
+      }
     } else if (body.action === "dispatch_batch" && body.batchId && uuid.test(body.batchId)) {
       result = await client.supabase.rpc("admin_dispatch_delivery_batch", { p_batch_id: body.batchId });
+      if (!result.error) {
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "batches",
+          p_action: "dispatch_batch",
+          p_entity_id: body.batchId,
+          p_details: `Batch ${body.batchId.slice(0, 8)} dispatched out for delivery.`
+        });
+      }
     } else if (body.action === "mark_delivered" && body.deliveryId && uuid.test(body.deliveryId)) {
       result = await client.supabase.rpc("admin_mark_delivery_delivered", { p_delivery_id: body.deliveryId });
+      if (!result.error) {
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "deliveries",
+          p_action: "mark_delivered",
+          p_entity_id: body.deliveryId,
+          p_details: `Delivery ${body.deliveryId.slice(0, 8)} confirmed delivered.`
+        });
+      }
+    } else if (body.action === "cancel_delivery" && body.deliveryId && uuid.test(body.deliveryId)) {
+      result = await client.supabase.rpc("admin_cancel_delivery", {
+        p_delivery_id: body.deliveryId,
+        p_refund_method: body.refundMethod === "original" ? "original" : "wallet",
+        p_reason: typeof body.reason === "string" ? body.reason.trim() : "",
+      });
+      if (!result.error) {
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "deliveries",
+          p_action: "cancel_delivery",
+          p_entity_id: body.deliveryId,
+          p_details: `Delivery cancelled with refund to ${body.refundMethod || "wallet"}. Reason: ${body.reason || "Not specified"}`
+        });
+      }
+    } else if (body.action === "resolve_refund" && body.refundId && uuid.test(body.refundId)) {
+      result = await client.supabase.rpc("admin_resolve_delivery_refund", {
+        p_refund_id: body.refundId,
+        p_resolution: body.resolution || "wallet",
+        p_notes: typeof body.notes === "string" ? body.notes.trim() : "",
+      });
+      if (!result.error) {
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "refunds",
+          p_action: "resolve_refund",
+          p_entity_id: body.refundId,
+          p_details: `Refund resolved via ${body.resolution || "wallet"}. Notes: ${body.notes || "None"}`
+        });
+      }
+    } else if (body.action === "unpost_menu_meal" && body.stockPoolId && uuid.test(body.stockPoolId)) {
+      result = await client.supabase.rpc("admin_unpost_menu_meal", {
+        p_stock_pool_id: body.stockPoolId,
+      });
+      if (!result.error) {
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "menus",
+          p_action: "unpost_menu_meal",
+          p_entity_id: body.stockPoolId,
+          p_details: `Meal slot ${body.stockPoolId.slice(0, 8)} unposted from menu.`
+        });
+      }
+    } else if (body.action === "mark_pickup_unclaimed" && body.deliveryId && uuid.test(body.deliveryId)) {
+      const reason = typeof body.reason === "string" && body.reason.trim()
+        ? body.reason.trim()
+        : "Holding window expired without pickup";
+      const note = `[UNCLAIMED] ${reason}. Forfeited per campus pickup policy.`;
+      const { error: updateErr } = await client.supabase
+        .from("order_deliveries")
+        .update({ status: "cancelled", delivery_note: note })
+        .eq("id", body.deliveryId);
+      if (updateErr) {
+        result = { error: updateErr, data: null };
+      } else {
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "deliveries",
+          p_action: "mark_pickup_unclaimed",
+          p_entity_id: body.deliveryId,
+          p_details: `Pickup ${body.deliveryId.slice(0, 8)} marked as unclaimed and forfeited. Reason: ${reason}.`,
+          p_metadata: { reason, note },
+        });
+        result = { data: true, error: null };
+      }
+    } else if (body.action === "reroute_pickup_to_delivery" && body.deliveryId && uuid.test(body.deliveryId)) {
+      const addressText = typeof body.address === "string" ? body.address.trim() : "";
+      const areaName = typeof body.areaName === "string" ? body.areaName.trim() : "Campus Delivery";
+      const note = typeof body.notes === "string" && body.notes.trim()
+        ? `[REROUTED FROM PICKUP] ${body.notes.trim()}`
+        : "[REROUTED FROM PICKUP] Customer requested emergency hostel drop-off.";
+      const updatePayload: Record<string, unknown> = {
+        fulfillment_type: "delivery",
+        address_text: addressText || "Hostel delivery (Customer arranged)",
+        area_name: areaName,
+        delivery_note: note,
+      };
+      if (body.batchId && uuid.test(body.batchId)) {
+        updatePayload.batch_id = body.batchId;
+      }
+      const { error: rerouteErr } = await client.supabase
+        .from("order_deliveries")
+        .update(updatePayload)
+        .eq("id", body.deliveryId);
+      if (rerouteErr) {
+        result = { error: rerouteErr, data: null };
+      } else {
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "deliveries",
+          p_action: "reroute_pickup_to_delivery",
+          p_entity_id: body.deliveryId,
+          p_details: `Pickup ${body.deliveryId.slice(0, 8)} rerouted to doorstep delivery: ${addressText || areaName}.`,
+          p_metadata: { addressText, areaName },
+        });
+        result = { data: true, error: null };
+      }
     } else return errorResponse("Choose a valid delivery action.", 400);
     if (result.error) {
       if (result.error.code === "42501") return mapRpcError(result.error, client.userId);

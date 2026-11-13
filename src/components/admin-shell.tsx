@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
-  ArrowSquareOut, CalendarBlank, ChartBar, ForkKnife, Gear, House,
+  ArrowSquareOut, CalendarBlank, ChartBar, ClipboardText, ForkKnife, Gear, House,
   List, MapPin, Package, Receipt, SignOut, Stack, Truck, Wallet, X,
 } from "@phosphor-icons/react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -21,6 +21,7 @@ const links = [
   { href: "/admin/refunds", label: "Refunds & wallets", icon: Wallet, exact: false, available: true },
   { href: "/admin/areas", label: "Delivery areas", icon: MapPin, exact: false, available: true },
   { href: "/admin/abandoned-payments", label: "Reports", icon: ChartBar, exact: false, available: true },
+  { href: "/admin/audit-log", label: "Audit log", icon: ClipboardText, exact: false, available: true },
   { href: "/admin/settings", label: "Settings", icon: Gear, exact: false, available: true },
 ];
 

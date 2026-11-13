@@ -49,8 +49,7 @@ export function AccountApp() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) { setLoading(false); return; }
     setLoading(true);
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) setError(userError.message);
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setProfile(null); setAddresses([]); setAreas([]); setLoading(false); return;
     }

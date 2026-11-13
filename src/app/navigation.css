@@ -1,14 +1,167 @@
 .customer-header nav a { display: flex; align-items: center; gap: 8px; height: 100%; position: relative; color: var(--muted); font-size: 16px; }
 .customer-header nav a.active { color: var(--orange); }
 .customer-header nav a.active::after { content: ''; height: 2px; background: var(--orange); bottom: 24px; left: 0; right: 0; position: absolute; }
-@media(max-width:600px) {
-  .customer-mobile-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--muted); font-size: 12px; min-width: 58px; min-height: 44px; }
-  .customer-mobile-nav a.active { color: var(--orange); }
-  .account-shell,.wallet-shell,.orders-shell,.checkout-shell { padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
+
+/* Ensure mobile navigation is hidden on desktop screens */
+.mobile-nav {
+  display: none;
 }
+
+/* ============================================================
+   PreChop Refined Mobile Bottom Navigation:
+   - Compact 68px height (excluding safe-area inset)
+   - Warm-white background (#fffdfa)
+   - Subtle top divider (1px rgba(0, 0, 0, 0.065))
+   - Consistent, lightweight 22px outline icons with matching stroke widths
+   - 10.5–11px labels with 4px icon-to-label gap
+   - Accessible touch target >= 44x44px per tab
+   - Selected item: PreChop orange (var(--orange))
+   - Inactive items: Muted charcoal (#555a52)
+   - Zero gradients, heavy shadows, bold labels, or decorative bloat
+   ============================================================ */
+@media(max-width:600px) {
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: calc(68px + env(safe-area-inset-bottom, 0px));
+    min-height: calc(68px + env(safe-area-inset-bottom, 0px));
+    max-height: calc(68px + env(safe-area-inset-bottom, 0px));
+    padding: 0 4px env(safe-area-inset-bottom, 0px);
+    align-items: stretch;
+    justify-content: space-around;
+    background: #fffdfa;
+    border-top: 1px solid rgba(0, 0, 0, 0.065);
+    box-shadow: 0 -1px 3px rgba(32, 28, 22, 0.02);
+    z-index: 30;
+    box-sizing: border-box;
+  }
+
+  .mobile-nav .mobile-nav-link,
+  .mobile-nav a {
+    flex: 1 1 0;
+    min-width: 44px;
+    min-height: 44px;
+    height: 68px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 2px;
+    color: #555a52; /* muted charcoal */
+    text-decoration: none;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: color 0.16s ease;
+  }
+
+  .mobile-nav .mobile-nav-link svg,
+  .mobile-nav a svg {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+    flex-shrink: 0;
+    color: inherit;
+    transition: color 0.16s ease, transform 0.16s ease;
+  }
+
+  .mobile-nav .mobile-nav-label,
+  .mobile-nav a span {
+    font-size: 10.5px;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+    color: inherit;
+    text-align: center;
+    white-space: nowrap;
+    transition: color 0.16s ease, font-weight 0.16s ease;
+  }
+
+  /* Selected / Active Tab */
+  .mobile-nav .mobile-nav-link.active,
+  .mobile-nav a.active {
+    color: var(--orange);
+  }
+
+  .mobile-nav .mobile-nav-link.active svg,
+  .mobile-nav a.active svg {
+    color: var(--orange);
+  }
+
+  .mobile-nav .mobile-nav-link.active .mobile-nav-label,
+  .mobile-nav a.active span {
+    color: var(--orange);
+    font-weight: 600;
+  }
+
+  @media (hover: hover) {
+    .mobile-nav .mobile-nav-link:hover:not(.active),
+    .mobile-nav a:hover:not(.active) {
+      color: #252922;
+    }
+  }
+
+  .mobile-nav .mobile-nav-link:active,
+  .mobile-nav a:active {
+    transform: scale(0.96);
+  }
+
+  .account-shell,.wallet-shell,.orders-shell,.checkout-shell { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+}
+
 .customer-header{position:sticky;top:0;z-index:20;background:var(--background);flex-shrink:0}
-.brand img{display:block;width:180px;height:auto}.footer .brand img{width:160px}
+.brand img{display:block;width:180px;height:auto}
 @media(max-width:600px){.brand img{width:150px}}
+
+/* Delivery location badge in mobile header */
+.header-location {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .header-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #5c554e;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 11px;
+    background: #f6eee5;
+    border: 1px solid #e8dbcd;
+    border-radius: 999px;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+
+  .header-location svg {
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .header-location {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .header-location span {
+    max-width: 115px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 .cutoff-notice{text-align:center;padding:42px 30px;background:#f7eee3;border:1px solid #ecdfce;border-radius:10px;max-width:760px}
 .cutoff-art{position:relative;width:100px;margin:0 auto 25px;color:var(--orange)}
 .cutoff-art>span{position:absolute;right:0;bottom:-5px;display:grid;place-items:center;background:#fcfbf8;border:1px solid #e4cbb3;border-radius:50%;width:44px;height:44px}

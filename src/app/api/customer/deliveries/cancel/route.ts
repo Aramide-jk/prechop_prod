@@ -24,6 +24,26 @@ export async function POST(request: Request) {
     const supabase = await getSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Sign in to cancel this delivery." }, { status: 401 });
+    const { data: deliveryRow } = await supabase
+      .from("order_deliveries")
+      .select("id,status,order_id,orders(id,customer_id,status)")
+      .eq("id", body.deliveryId)
+      .maybeSingle();
+
+    const orderRow = (Array.isArray(deliveryRow?.orders) ? deliveryRow?.orders[0] : deliveryRow?.orders) as { id: string; customer_id: string; status: string } | null | undefined;
+    if (deliveryRow && orderRow?.customer_id === user.id && (deliveryRow.status === "pending_payment" || orderRow.status === "pending_payment")) {
+      const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
+      const admin = getSupabaseAdminClient();
+      await admin.from("order_deliveries").update({ status: "cancelled" }).eq("id", body.deliveryId);
+      await admin.from("orders").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", orderRow.id);
+      return NextResponse.json({
+        cancelled: true,
+        refundStatus: "none",
+        walletRefund: 0,
+        cashRefund: 0,
+      });
+    }
+
     const { data, error } = await supabase.rpc("request_customer_delivery_cancellation", {
       p_delivery_id: body.deliveryId,
       p_refund_method: body.refundMethod,

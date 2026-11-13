@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { plateTotal, addOnUsed, mealRemaining, readCart, upcomingDates } from '../src/lib/menu.ts';
+import { windowClosed } from '../src/lib/delivery-slots.ts';
+
 const plate = { id: 'one', mealId: 'jollof', date: '2026-09-29', window: 'Lunch', protein: 'chicken', extras: { chicken: 2, water: 1 } };
 test('price includes base meal, protein and each extra', () => {
   assert.equal(plateTotal(plate), 4200);
@@ -25,4 +27,16 @@ test('calendar provides seven consecutive dates', () => {
   const dates = upcomingDates();
   assert.equal(dates.length, 7);
   assert.equal(Date.parse(dates[6]) - Date.parse(dates[0]), 6 * 86400000);
+});
+test('windowClosed respects live batch cutoffs over static defaults', () => {
+  const sevenPmLagos = Date.parse('2026-11-11T19:52:00+01:00');
+  // Static sample dinner closes at 16:00, so without customCutoffs 19:52 is closed:
+  assert.equal(windowClosed('2026-11-11', 'Dinner', sevenPmLagos), true);
+  // With live 20:10 dinner batch cutoff, 19:52 is still OPEN:
+  assert.equal(windowClosed('2026-11-11', 'Dinner', sevenPmLagos, ['20:10']), false);
+  // Once 20:15 arrives, 20:10 batch closes:
+  const afterCutoff = Date.parse('2026-11-11T20:15:00+01:00');
+  assert.equal(windowClosed('2026-11-11', 'Dinner', afterCutoff, ['20:10']), true);
+  // Empty customCutoffs means no active batches for that slot -> closed:
+  assert.equal(windowClosed('2026-11-11', 'Dinner', sevenPmLagos, []), true);
 });

@@ -9,7 +9,25 @@ function Status({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export function MealGridSkeleton() {
-  return <Status label="Loading meals"><div className="skeleton-meal-grid">{Array.from({ length: 4 }, (_, index) => <article className="skeleton-meal" key={index}><Block className="skeleton-meal-image" /><Block className="skeleton-line skeleton-line-title" /><Block className="skeleton-line skeleton-line-copy" /><div className="skeleton-meal-bottom"><Block className="skeleton-line skeleton-line-price" /><Block className="skeleton-circle" /></div></article>)}</div></Status>;
+  return (
+    <Status label="Loading meals">
+      <div className="skeleton-meal-grid">
+        {Array.from({ length: 4 }, (_, index) => (
+          <article className="skeleton-meal" key={index}>
+            <Block className="skeleton-meal-image" />
+            <div className="skeleton-meal-body">
+              <Block className="skeleton-line skeleton-line-title" />
+              <Block className="skeleton-line skeleton-line-copy" />
+              <div className="skeleton-meal-bottom">
+                <Block className="skeleton-line skeleton-line-price" />
+                <Block className="skeleton-button" />
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </Status>
+  );
 }
 
 export function DateStripSkeleton() {
