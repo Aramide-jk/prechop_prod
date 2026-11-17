@@ -591,10 +591,10 @@ export function MenuApp({
           </div>
           <div className="hero-photo">
             <Image
-              src="/images/beans.png"
-              alt="Fresh honey beans and golden fried plantain"
+              src="/images/prechop-box-banner.png"
+              alt="PreChop fresh meal box with jollof rice, chicken, and plantain"
               fill
-              sizes="(max-width: 600px) 65vw, 420px"
+              sizes="(max-width: 800px) 100vw, 52vw"
               priority
             />
           </div>

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test tests/menu.test.mjs tests/notifications.test.mjs tests/settings.test.mjs tests/campaign.test.mjs tests/delivery-code.test.mjs",
+    "test": "node --experimental-strip-types --test tests/menu.test.mjs tests/notifications.test.mjs tests/settings.test.mjs tests/campaign.test.mjs tests/delivery-code.test.mjs tests/menu-reminder.test.mjs tests/admin-team.test.mjs",
     "test:browser": "playwright test"
   },
   "dependencies": {

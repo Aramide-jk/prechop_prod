@@ -237,18 +237,6 @@
     flex-wrap: wrap;
     gap: 12px;
   }
-  .hero {
-    min-height: 540px;
-  }
-  .hero-copy {
-    width: 100%;
-  }
-  .hero .eyebrow {
-    font-size: 12px;
-  }
-  .hero p {
-    font-size: 16px;
-  }
   .menu-context {
     flex-wrap: wrap;
   }

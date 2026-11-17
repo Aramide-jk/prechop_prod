@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { ArrowClockwise, CalendarBlank, CaretLeft, CaretRight, Check, FloppyDisk, ForkKnife, Gift, MagnifyingGlass, Megaphone, Phone, Plus, Storefront, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, CalendarBlank, CaretLeft, CaretRight, Check, Copy, FloppyDisk, ForkKnife, Gift, MagnifyingGlass, Megaphone, Phone, Plus, Storefront, WarningCircle, WhatsappLogo } from "@phosphor-icons/react";
 import {
   defaultStoreSettings,
   isCampaignLive,
@@ -13,9 +13,18 @@ import {
 } from "@/lib/settings";
 import { SignInDialog } from "@/components/sign-in";
 import { AdminOrdersToday } from "@/components/admin-orders-today";
+import { AdminTeam } from "@/components/admin-team";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { money } from "@/lib/menu";
 import { formatPackCode } from "@/lib/delivery-code";
+import {
+  addDays,
+  mondayOf,
+  todayInZaria,
+  formattedDay,
+  buildMenuReminderMessage,
+} from "@/lib/menu-calendar";
+import { getWhatsAppChatUrl } from "@/lib/notifications";
 
 type AdminMealOption = {
   slug: string;
@@ -63,7 +72,7 @@ function fromDateTimeLocalValue(localValue: string): string | null {
   return parsed.toISOString();
 }
 
-export type AdminModuleKey = "menus" | "meals" | "add-ons" | "batches" | "orders" | "deliveries" | "refunds" | "areas" | "settings" | "audit-log";
+export type AdminModuleKey = "menus" | "meals" | "add-ons" | "batches" | "orders" | "deliveries" | "refunds" | "areas" | "settings" | "audit-log" | "team";
 type Row = Record<string, unknown>;
 type OrderDetail = { order: Row; customer: Row | null; deliveries: Row[]; items: Row[]; stickers: Row[]; batches: Row[]; windows: Row[] };
 type MenuBatch = { id: string; name: string; window: string; starts: string; ends: string };
@@ -293,25 +302,17 @@ const config: Record<AdminModuleKey, ModuleConfig> = {
     ],
     search: ["admin_email", "category", "action", "details"],
   },
+  team: {
+    title: "Admin team",
+    eyebrow: "ACCESS CONTROL",
+    description: "Manage approved admin accounts, operational roles, and authorized phone numbers.",
+    table: "admin_users",
+    columns: [],
+    search: [],
+  },
 };
 
-function addDays(date: string, amount: number) {
-  const value = new Date(`${date}T12:00:00Z`);
-  value.setUTCDate(value.getUTCDate() + amount);
-  return value.toISOString().slice(0, 10);
-}
-function todayInZaria() {
-  const parts = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: "Africa/Lagos" }).formatToParts(new Date());
-  return `${parts.find((part) => part.type === "year")?.value}-${parts.find((part) => part.type === "month")?.value}-${parts.find((part) => part.type === "day")?.value}`;
-}
-function mondayOf(date: string) {
-  const value = new Date(`${date}T12:00:00Z`);
-  const day = (value.getUTCDay() + 6) % 7;
-  return addDays(date, -day);
-}
-function formattedDay(date: string, options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat("en-NG", { ...options, timeZone: "Africa/Lagos" }).format(new Date(`${date}T12:00:00Z`));
-}
+
 
 const humanDate = (value: unknown) => typeof value === "string" && value ? new Intl.DateTimeFormat("en-NG", { dateStyle: "medium", timeZone: "Africa/Lagos" }).format(new Date(value.length === 10 ? `${value}T12:00:00` : value)) : "—";
 const display = (value: unknown, format?: string) => {
@@ -392,6 +393,12 @@ export function AdminModulePage({ section }: { section: AdminModuleKey }) {
   const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
   const [settingsForm, setSettingsForm] = useState<StoreSettings>(defaultStoreSettings);
 
+  // Weekly menu duplication & next-week reminder
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
+  const [nextWeekHasMeals, setNextWeekHasMeals] = useState<boolean | null>(null);
+  const [whatsappReminderUrl, setWhatsappReminderUrl] = useState("");
+
   // Modals for admin operations
   const [cancelModalDeliveryId, setCancelModalDeliveryId] = useState<string | null>(null);
   const [cancelRefundMethod, setCancelRefundMethod] = useState<"wallet" | "original">("wallet");
@@ -427,21 +434,43 @@ export function AdminModulePage({ section }: { section: AdminModuleKey }) {
     if (adminError) { setAccess("allowed"); setError("Admin access check is not available yet. Apply the latest admin access migration, then reload."); setLoading(false); return; }
     if (!adminCheck) { setAccess("not_admin"); setRows([]); setLoading(false); return; }
     setAccess("allowed");
+    if (section === "team") {
+      setLoading(false);
+      return;
+    }
     let result: { data: Row[] | null; error: { message: string } | null };
 
     if (section === "menus") {
       const weekEnd = addDays(weekStart, 6);
-      const [pools, meals, menuLinks, batches, deliveryWindows] = await Promise.all([
+      const targetWeekStart = addDays(weekStart, 7);
+      const targetWeekEnd = addDays(targetWeekStart, 6);
+      const [pools, meals, menuLinks, batches, deliveryWindows, nextPools, storeSettings] = await Promise.all([
         supabase.from("meal_stock_pools").select("id,meal_id,service_date,portion_limit").gte("service_date", weekStart).lte("service_date", weekEnd).order("service_date"),
         supabase.from("meals").select("id,name,base_price_ngn,image_url,active").order("name"),
         supabase.from("batch_menu_items").select("stock_pool_id,batch_id,active"),
         supabase.from("delivery_batches").select("id,name,window_id,delivery_starts_at,delivery_ends_at,active").order("delivery_starts_at"),
         supabase.from("delivery_windows").select("id,window,active").order("window"),
+        supabase.from("meal_stock_pools").select("id").gte("service_date", targetWeekStart).lte("service_date", targetWeekEnd),
+        supabase.from("referral_campaign_settings").select("dispatch_phone,whatsapp_number").eq("id", 1).maybeSingle(),
       ]);
       setWindows(deliveryWindows.data ?? []);
       const activeBatches = (batches.data ?? []).filter((batch: Row) => batch.active);
       setBatchesList(activeBatches);
       setSelectOptions({ meal_id: (meals.data ?? []).filter((meal: Row) => meal.active), batch_id: activeBatches });
+      const nextWeekEmpty = (nextPools.data ?? []).length === 0;
+      setNextWeekHasMeals(!nextWeekEmpty);
+      if (nextWeekEmpty) {
+        const phone = storeSettings.data?.dispatch_phone || storeSettings.data?.whatsapp_number || "+2348031234567";
+        const reminderMsg = buildMenuReminderMessage({
+          startDate: targetWeekStart,
+          endDate: targetWeekEnd,
+          url: `${typeof window !== "undefined" ? window.location.origin : "https://prechop.com.ng"}/admin/menus?copy=next-week`,
+          siteName: "PreChop",
+        });
+        setWhatsappReminderUrl(getWhatsAppChatUrl(phone, reminderMsg));
+      } else {
+        setWhatsappReminderUrl("");
+      }
       const poolIds = (pools.data ?? []).map((pool: Row) => pool.id);
       const [items, deliveries] = poolIds.length ? await Promise.all([
         supabase.from("order_items").select("stock_pool_id,delivery_id").in("stock_pool_id", poolIds),
@@ -591,6 +620,15 @@ export function AdminModulePage({ section }: { section: AdminModuleKey }) {
     if (tab !== "campaign" && tab !== "activity" && tab !== "traffic") return;
     const timer = window.setTimeout(() => setAuditTab(tab), 0);
     return () => window.clearTimeout(timer);
+  }, [section]);
+
+  useEffect(() => {
+    if (section !== "menus" || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("copy") === "next-week" || params.get("action") === "duplicate-week") {
+      const timer = window.setTimeout(() => setDuplicateModalOpen(true), 100);
+      return () => window.clearTimeout(timer);
+    }
   }, [section]);
 
   useEffect(() => { const timer = window.setTimeout(() => void load(), 0); return () => window.clearTimeout(timer); }, [load]);
@@ -743,6 +781,39 @@ export function AdminModulePage({ section }: { section: AdminModuleKey }) {
       setError(err instanceof Error ? err.message : "Could not unpost meal.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function duplicateCurrentWeekToNextWeek() {
+    setDuplicating(true);
+    setError("");
+    setNotice("");
+    try {
+      const targetWeekStart = addDays(weekStart, 7);
+      const targetWeekEnd = addDays(targetWeekStart, 6);
+      const response = await fetch("/api/admin/dashboard", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "duplicate_weekly_menu",
+          sourceWeekStart: weekStart,
+          targetWeekStart,
+        }),
+      });
+      const result = await response.json() as { error?: string; updated?: { count?: number } };
+      if (!response.ok) {
+        throw new Error(result.error ?? "Could not duplicate weekly menu.");
+      }
+      const count = result.updated?.count ?? "all";
+      setNotice(`Successfully duplicated ${count} meal posting(s) to next week (${formattedDay(targetWeekStart, { month: "short", day: "numeric" })} – ${formattedDay(targetWeekEnd, { month: "short", day: "numeric" })}).`);
+      setDuplicateModalOpen(false);
+      setWeekStart(targetWeekStart);
+      setSelectedDate(targetWeekStart);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not duplicate weekly menu.");
+    } finally {
+      setDuplicating(false);
     }
   }
 
@@ -1012,6 +1083,43 @@ export function AdminModulePage({ section }: { section: AdminModuleKey }) {
       }
     }
     setCreateOpen(true);
+  }
+
+  if (section === "team") {
+    return (
+      <main className="admin-module-page">
+        {access === "signed_out" && !loading && (
+          <section className="admin-access-card">
+            <span className="admin-access-icon"><WarningCircle size={25} /></span>
+            <h2>Sign in to continue.</h2>
+            <p>Use the PreChop account approved for administrator access.</p>
+            <button className="primary" onClick={() => setSignInOpen(true)}>Sign in</button>
+          </section>
+        )}
+        {access === "not_admin" && !loading && (
+          <section className="admin-access-card">
+            <span className="admin-access-icon"><WarningCircle size={25} /></span>
+            <h2>Admin access required.</h2>
+            <p>This account is not on the PreChop admin allowlist.</p>
+          </section>
+        )}
+        {access === "allowed" && <AdminTeam />}
+        {loading && (
+          <div className="admin-module-loading">
+            <span /><span /><span />
+          </div>
+        )}
+        {signInOpen && (
+          <SignInDialog
+            close={() => setSignInOpen(false)}
+            complete={() => {
+              setSignInOpen(false);
+              void load();
+            }}
+          />
+        )}
+      </main>
+    );
   }
 
   return <main className="admin-module-page">
@@ -2094,8 +2202,63 @@ export function AdminModulePage({ section }: { section: AdminModuleKey }) {
           )}
         </section>
       ) : section === "menus" ? <>
+        {nextWeekHasMeals === false && (
+          <aside className="admin-menu-reminder-banner" role="status">
+            <div className="admin-menu-reminder-banner-content">
+              <WarningCircle size={22} weight="fill" className="admin-menu-reminder-icon" />
+              <div className="admin-menu-reminder-banner-text">
+                <strong>Next week&apos;s menu ({formattedDay(addDays(weekStart, 7), { month: "short", day: "numeric" })} – {formattedDay(addDays(weekStart, 13), { month: "short", day: "numeric" })}) is currently empty!</strong>
+                <p>Customers will not see any meals to pre-order for next week until meals are posted.</p>
+              </div>
+            </div>
+            <div className="admin-menu-reminder-banner-actions">
+              <button
+                type="button"
+                className="admin-module-primary admin-banner-copy-btn"
+                onClick={() => setDuplicateModalOpen(true)}
+                disabled={busy || duplicating}
+              >
+                <Copy size={16} />
+                Duplicate this week
+              </button>
+              {whatsappReminderUrl && (
+                <a
+                  href={whatsappReminderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="admin-action-button admin-whatsapp-link"
+                  title="Send reminder to admin WhatsApp"
+                >
+                  <WhatsappLogo size={16} weight="fill" />
+                  WhatsApp reminder
+                </a>
+              )}
+            </div>
+          </aside>
+        )}
         <section className="admin-menu-planner">
-          <div className="admin-menu-week-heading"><div><span className="eyebrow">YOUR SERVICE CALENDAR</span><h2>{formattedDay(weekStart, { month: "long" })} {formattedDay(weekStart, { day: "numeric" })} <span>—</span> {formattedDay(addDays(weekStart, 6), { month: "long", day: "numeric", year: "numeric" })}</h2><p>Choose a day to review or post its meals.</p></div><div className="admin-menu-week-controls"><button type="button" aria-label="Previous week" onClick={() => moveWeek(-1)}><CaretLeft size={18} /></button><button type="button" onClick={() => { const current = mondayOf(todayInZaria()); setWeekStart(current); setSelectedDate(todayInZaria()); }}>This week</button><button type="button" aria-label="Next week" onClick={() => moveWeek(1)}><CaretRight size={18} /></button></div></div>
+          <div className="admin-menu-week-heading">
+            <div>
+              <span className="eyebrow">YOUR SERVICE CALENDAR</span>
+              <h2>{formattedDay(weekStart, { month: "long" })} {formattedDay(weekStart, { day: "numeric" })} <span>—</span> {formattedDay(addDays(weekStart, 6), { month: "long", day: "numeric", year: "numeric" })}</h2>
+              <p>Choose a day to review or post its meals.</p>
+            </div>
+            <div className="admin-menu-week-controls">
+              <button type="button" aria-label="Previous week" onClick={() => moveWeek(-1)}><CaretLeft size={18} /></button>
+              <button type="button" onClick={() => { const current = mondayOf(todayInZaria()); setWeekStart(current); setSelectedDate(todayInZaria()); }}>This week</button>
+              <button type="button" aria-label="Next week" onClick={() => moveWeek(1)}><CaretRight size={18} /></button>
+              <button
+                type="button"
+                className="admin-menu-copy-btn"
+                title="Duplicate this week's menu to next week"
+                onClick={() => setDuplicateModalOpen(true)}
+                disabled={busy || duplicating}
+              >
+                <Copy size={16} />
+                Duplicate week
+              </button>
+            </div>
+          </div>
           <div className="admin-menu-date-strip" role="tablist" aria-label="Choose service date">{weekDays.map((date) => { const dayRows = rows.filter((row) => row.service_date === date); const activeDate = selectedDate === date; return <button type="button" role="tab" aria-selected={activeDate} className={activeDate ? "is-active" : ""} key={date} onClick={() => setSelectedDate(date)}><span>{formattedDay(date, { weekday: "short" })}</span><strong>{formattedDay(date, { day: "numeric" })}</strong><small>{dayRows.length ? `${dayRows.length} ${dayRows.length === 1 ? "meal" : "meals"}` : "No menu"}</small></button>; })}</div>
         </section>
         <section className="admin-menu-day-board">
@@ -2119,6 +2282,73 @@ export function AdminModulePage({ section }: { section: AdminModuleKey }) {
       {section === "meals" && <><fieldset style={{ border: "1px solid var(--admin-line)", borderRadius: "6px", padding: "14px", marginTop: "10px" }}><legend style={{ fontSize: "12px", fontWeight: "600", color: "#5e5b56", padding: "0 6px" }}>Compatible proteins</legend><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>{availableProteins.map(p => <label key={String(p.id)} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer" }}><input type="checkbox" checked={selectedProteins.includes(String(p.id))} onChange={(e) => { if (e.target.checked) setSelectedProteins(curr => [...curr, String(p.id)]); else setSelectedProteins(curr => curr.filter(id => id !== String(p.id))); }} />{String(p.name)} ({money(Number(p.price_ngn))})</label>)}</div></fieldset><fieldset style={{ border: "1px solid var(--admin-line)", borderRadius: "6px", padding: "14px", marginTop: "10px" }}><legend style={{ fontSize: "12px", fontWeight: "600", color: "#5e5b56", padding: "0 6px" }}>Compatible extras & sides</legend><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>{availableExtras.map(e => <label key={String(e.id)} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer" }}><input type="checkbox" checked={selectedExtras.includes(String(e.id))} onChange={(ev) => { if (ev.target.checked) setSelectedExtras(curr => [...curr, String(e.id)]); else setSelectedExtras(curr => curr.filter(id => id !== String(e.id))); }} />{String(e.name)} ({money(Number(e.price_ngn))})</label>)}</div></fieldset></>}
 
       <div className="admin-module-modal-actions"><button type="button" className="admin-refresh" onClick={() => { setCreateOpen(false); setEditingRow(null); setImageFile(null); setImagePreview(""); setClearImage(false); }}>Cancel</button><button className="admin-module-primary" disabled={busy}>{uploadingImage ? "Uploading image…" : busy ? "Saving…" : "Save"}</button></div></form></div>}
+
+    {duplicateModalOpen && (
+      <div
+        className="admin-module-modal-backdrop"
+        role="presentation"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget && !duplicating) setDuplicateModalOpen(false);
+        }}
+      >
+        <div className="admin-module-modal admin-duplicate-modal" role="dialog" aria-modal="true" aria-labelledby="admin-duplicate-title">
+          <div>
+            <span className="eyebrow">WEEKLY MENU PLANNING</span>
+            <button
+              type="button"
+              aria-label="Close"
+              disabled={duplicating}
+              onClick={() => setDuplicateModalOpen(false)}
+            >
+              ×
+            </button>
+            <h2 id="admin-duplicate-title">Duplicate this week&apos;s menu to next week?</h2>
+          </div>
+
+          <div className="admin-duplicate-modal-content">
+            <p>
+              This will duplicate all meals, portion limits, and delivery windows from the current week to the next week:
+            </p>
+            <div className="admin-duplicate-dates-card">
+              <div className="admin-duplicate-date-box">
+                <span>Source Week</span>
+                <strong>{formattedDay(weekStart, { month: "short", day: "numeric" })} — {formattedDay(addDays(weekStart, 6), { month: "short", day: "numeric" })}</strong>
+                <small>{rows.filter(r => String(r.service_date ?? "") >= weekStart && String(r.service_date ?? "") <= addDays(weekStart, 6)).length} meal(s) posted</small>
+              </div>
+              <div className="admin-duplicate-arrow">→</div>
+              <div className="admin-duplicate-date-box is-target">
+                <span>Target (Next Week)</span>
+                <strong>{formattedDay(addDays(weekStart, 7), { month: "short", day: "numeric" })} — {formattedDay(addDays(weekStart, 13), { month: "short", day: "numeric" })}</strong>
+                <small>Opens automatically for customer orders</small>
+              </div>
+            </div>
+            <p className="admin-duplicate-modal-note">
+              Monday meals will copy to next Monday, Tuesday to next Tuesday, etc. You can adjust portions or swap meals anytime afterwards.
+            </p>
+          </div>
+
+          <div className="admin-module-modal-actions">
+            <button
+              type="button"
+              className="admin-refresh"
+              disabled={duplicating}
+              onClick={() => setDuplicateModalOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="admin-module-primary"
+              disabled={duplicating}
+              onClick={() => void duplicateCurrentWeekToNextWeek()}
+            >
+              <Copy size={16} />
+              {duplicating ? "Duplicating menu..." : "Confirm & Duplicate to Next Week"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {signInOpen && <SignInDialog close={() => setSignInOpen(false)} complete={() => { setSignInOpen(false); void load(); }} />}
   </main>;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { addDays } from "@/lib/menu-calendar";
 
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store" };
@@ -55,6 +56,8 @@ export async function POST(request: Request) {
       stockPoolId?: string;
       address?: string;
       areaName?: string;
+      sourceWeekStart?: string;
+      targetWeekStart?: string;
     };
     let result;
     if (body.action === "start_preparing" && body.batchId && uuid.test(body.batchId)) {
@@ -178,6 +181,76 @@ export async function POST(request: Request) {
           p_metadata: { addressText, areaName },
         });
         result = { data: true, error: null };
+      }
+    } else if (body.action === "duplicate_weekly_menu" && body.sourceWeekStart && body.targetWeekStart) {
+      const sourceStart = String(body.sourceWeekStart).slice(0, 10);
+      const sourceEnd = addDays(sourceStart, 6);
+      const targetStart = String(body.targetWeekStart).slice(0, 10);
+
+      const { data: pools, error: poolsErr } = await client.supabase
+        .from("meal_stock_pools")
+        .select("id, meal_id, service_date, portion_limit")
+        .gte("service_date", sourceStart)
+        .lte("service_date", sourceEnd);
+
+      if (poolsErr) {
+        result = { error: poolsErr, data: null };
+      } else if (!pools || pools.length === 0) {
+        return errorResponse("There are no meals posted in the source week to duplicate.", 400);
+      } else {
+        const poolIds = pools.map((p: { id: string }) => p.id);
+        const { data: links } = await client.supabase
+          .from("batch_menu_items")
+          .select("stock_pool_id, batch_id, active")
+          .in("stock_pool_id", poolIds);
+
+        let duplicatedCount = 0;
+        for (const pool of pools) {
+          const dayOffset = Math.round((new Date(`${pool.service_date}T12:00:00Z`).getTime() - new Date(`${sourceStart}T12:00:00Z`).getTime()) / 86400000);
+          const targetDate = addDays(targetStart, dayOffset);
+
+          const { data: newPool, error: poolUpsertErr } = await client.supabase
+            .from("meal_stock_pools")
+            .upsert(
+              {
+                meal_id: pool.meal_id,
+                service_date: targetDate,
+                portion_limit: pool.portion_limit,
+              },
+              { onConflict: "meal_id,service_date" }
+            )
+            .select("id")
+            .single();
+
+          if (poolUpsertErr || !newPool) {
+            console.error("Failed to copy pool:", poolUpsertErr?.message);
+            continue;
+          }
+
+          duplicatedCount++;
+
+          const poolLinks = (links ?? []).filter((l: { stock_pool_id: string; active: boolean }) => l.stock_pool_id === pool.id && l.active);
+          if (poolLinks.length > 0) {
+            const batchInserts = poolLinks.map((l: { batch_id: string }) => ({
+              stock_pool_id: newPool.id,
+              batch_id: l.batch_id,
+              active: true,
+            }));
+            await client.supabase
+              .from("batch_menu_items")
+              .upsert(batchInserts, { onConflict: "batch_id,stock_pool_id" });
+          }
+        }
+
+        await client.supabase.rpc("log_admin_action", {
+          p_category: "menus",
+          p_action: "duplicate_weekly_menu",
+          p_entity_id: targetStart,
+          p_details: `Duplicated ${duplicatedCount} meal posting(s) from week ${sourceStart} to week ${targetStart}.`,
+          p_metadata: { sourceStart, targetStart, duplicatedCount },
+        });
+
+        result = { data: { success: true, count: duplicatedCount, targetWeekStart: targetStart }, error: null };
       }
     } else return errorResponse("Choose a valid delivery action.", 400);
     if (result.error) {

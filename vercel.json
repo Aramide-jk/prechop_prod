@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/menu-reminder",
+      "schedule": "0 8 * * 6"
+    }
+  ]
+}
