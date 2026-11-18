@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, Check, Clock, Receipt, Wallet, X } from "@phosphor-icons/react";
+import {
+  ArrowDownLeft,
+  ArrowRight,
+  ArrowUpRight,
+  CaretDown,
+  Check,
+  Clock,
+  Gift,
+  Receipt,
+  Wallet,
+  X,
+} from "@phosphor-icons/react";
 import { money } from "@/lib/menu";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { SignInDialog } from "@/components/sign-in";
@@ -20,11 +31,42 @@ const entries: Entry[] = [
 function Transaction({ entry, close, sample }: { entry: Entry; close: () => void; sample: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    const element = ref.current; const previous = document.activeElement as HTMLElement | null; const overflow = document.body.style.overflow;
-    element?.showModal(); document.body.style.overflow = "hidden";
-    return () => { element?.close(); document.body.style.overflow = overflow; previous?.focus(); };
+    const element = ref.current;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    element?.showModal();
+    document.body.style.overflow = "hidden";
+    return () => {
+      element?.close();
+      document.body.style.overflow = overflow;
+      previous?.focus();
+    };
   }, []);
-  return <dialog ref={ref} className="modal wallet-dialog" aria-labelledby="transaction-title" onCancel={e => { e.preventDefault(); close(); }}><button className="icon-button modal-close" aria-label="Close transaction" onClick={close}><X size={22} /></button><span className="eyebrow">{sample ? "SAMPLE TRANSACTION" : "WALLET TRANSACTION"}</span><h2 id="transaction-title">{entry.amount > 0 ? "Refund received." : "Credit put to good use."}</h2><p className={`wallet-detail-amount ${entry.amount > 0 ? "credit" : ""}`}>{entry.amount > 0 ? "+" : "−"}{money(Math.abs(entry.amount))}</p><span className="wallet-posted"><Check size={16} /> {sample ? "Completed · preview" : "Posted to your wallet"}</span><p className="wallet-detail-description">{entry.detail}</p><dl className="wallet-detail-list"><div><dt>Transaction</dt><dd>{entry.id}</dd></div><div><dt>Order reference</dt><dd>{entry.delivery}</dd></div><div><dt>Date</dt><dd>{entry.date}</dd></div><div><dt>Balance after transaction</dt><dd>{money(entry.balance)}</dd></div></dl>{sample && <p className="wallet-detail-note">These are sample records. No real refund or payment has been processed.</p>}<button className="primary" onClick={close}>Back to wallet <ArrowRight size={18} /></button></dialog>;
+
+  return (
+    <dialog ref={ref} className="modal wallet-dialog" aria-labelledby="transaction-title" onCancel={(e) => { e.preventDefault(); close(); }}>
+      <button className="icon-button modal-close" aria-label="Close transaction" onClick={close}>
+        <X size={22} />
+      </button>
+      <span className="eyebrow">{sample ? "SAMPLE TRANSACTION" : "WALLET TRANSACTION"}</span>
+      <h2 id="transaction-title">{entry.amount > 0 ? "Refund received." : "Credit put to good use."}</h2>
+      <p className={`wallet-detail-amount ${entry.amount > 0 ? "credit" : ""}`}>
+        {entry.amount > 0 ? "+" : "−"}{money(Math.abs(entry.amount))}
+      </p>
+      <span className="wallet-posted">
+        <Check size={16} /> {sample ? "Completed · preview" : "Posted to your wallet"}
+      </span>
+      <p className="wallet-detail-description">{entry.detail}</p>
+      <dl className="wallet-detail-list">
+        <div><dt>Transaction</dt><dd>{entry.id}</dd></div>
+        <div><dt>Order reference</dt><dd>{entry.delivery}</dd></div>
+        <div><dt>Date</dt><dd>{entry.date}</dd></div>
+        <div><dt>Balance after transaction</dt><dd>{money(entry.balance)}</dd></div>
+      </dl>
+      {sample && <p className="wallet-detail-note">These are sample records. No real refund or payment has been processed.</p>}
+      <button className="primary" onClick={close}>Back to wallet <ArrowRight size={18} /></button>
+    </dialog>
+  );
 }
 
 export function WalletPage() {
@@ -37,41 +79,272 @@ export function WalletPage() {
   const [signedIn, setSignedIn] = useState(false);
   const [error, setError] = useState("");
   const [signInOpen, setSignInOpen] = useState(false);
+
   useEffect(() => {
-    if (!live) { const timer = setTimeout(() => { setLedger(entries); setSignedIn(true); setLoading(false); }, 0); return () => clearTimeout(timer); }
+    if (!live) {
+      const timer = setTimeout(() => {
+        setLedger(entries);
+        setSignedIn(true);
+        setLoading(false);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+
     let active = true;
     async function load() {
       const supabase = getSupabaseBrowserClient();
-      if (!supabase) { if (active) { setError("Supabase is not configured."); setLoading(false); } return; }
+      if (!supabase) {
+        if (active) {
+          setError("Supabase is not configured.");
+          setLoading(false);
+        }
+        return;
+      }
+
       const { data: auth } = await supabase.auth.getUser();
-      if (!auth?.user) { if (active) { setSignedIn(false); setLedger([]); setLoading(false); } return; }
+      if (!auth?.user) {
+        if (active) {
+          setSignedIn(false);
+          setLedger([]);
+          setLoading(false);
+        }
+        return;
+      }
+
       if (active) setSignedIn(true);
       const { error: releaseError } = await supabase.rpc("release_expired_customer_wallet_credits");
-      const { data, error: ledgerError } = await supabase.from("wallet_entries").select("id,order_id,kind,amount_ngn,description,created_at,orders(payment_reference)").eq("customer_id", auth.user.id).order("created_at", { ascending: true });
+      const { data, error: ledgerError } = await supabase
+        .from("wallet_entries")
+        .select("id,order_id,kind,amount_ngn,description,created_at,orders(payment_reference)")
+        .eq("customer_id", auth.user.id)
+        .order("created_at", { ascending: true });
+
       if (!active) return;
-      if (releaseError || ledgerError) { setError(releaseError?.message ?? ledgerError?.message ?? "We couldn’t load wallet activity."); setLedger([]); setLoading(false); return; }
+      if (releaseError || ledgerError) {
+        setError(releaseError?.message ?? ledgerError?.message ?? "We couldn’t load wallet activity.");
+        setLedger([]);
+        setLoading(false);
+        return;
+      }
+
       let balance = 0;
-      const ascending = ((data ?? []) as unknown as { id: string; order_id: string | null; kind: string; amount_ngn: number; description: string; created_at: string; orders: { payment_reference: string | null } | { payment_reference: string | null }[] | null }[]).map(row => {
+      const ascending = ((data ?? []) as unknown as {
+        id: string;
+        order_id: string | null;
+        kind: string;
+        amount_ngn: number;
+        description: string;
+        created_at: string;
+        orders: { payment_reference: string | null } | { payment_reference: string | null }[] | null;
+      }[]).map((row) => {
         balance += row.amount_ngn;
         const order = Array.isArray(row.orders) ? row.orders[0] : row.orders;
-        return { id: row.id, date: new Date(row.created_at).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" }), title: row.kind === "refund" ? "Cancelled delivery refund" : row.kind === "order_debit" ? "Credit used on meals" : "Wallet adjustment", amount: row.amount_ngn, delivery: order?.payment_reference ?? row.order_id ?? "Wallet", detail: row.description, balance };
+        const isReward = row.kind === "referral_reward" || row.kind === "reward" || row.description?.toLowerCase().includes("referral");
+        const title = row.kind === "refund"
+          ? "Cancelled delivery refund"
+          : isReward
+          ? "Referral bonus reward"
+          : row.kind === "order_debit"
+          ? "Credit used on meals"
+          : "Wallet adjustment";
+
+        return {
+          id: row.id,
+          date: new Date(row.created_at).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" }),
+          title,
+          amount: row.amount_ngn,
+          delivery: order?.payment_reference ?? row.order_id ?? "Wallet",
+          detail: row.description,
+          balance,
+        };
       });
-      setLedger(ascending.reverse()); setError(""); setLoading(false);
+
+      setLedger(ascending.reverse());
+      setError("");
+      setLoading(false);
     }
+
     const timer = setTimeout(() => { void load(); }, 0);
-    return () => { active = false; clearTimeout(timer); };
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [live]);
+
   const entriesForView = live ? ledger : empty ? [] : ledger;
   const balance = entriesForView.reduce((sum, entry) => sum + entry.amount, 0);
-  const shown = entriesForView.filter(entry => filter === "All activity" || (filter === "Refunds" ? entry.amount > 0 : entry.amount < 0));
-  return <>
-    <main className="wallet-shell">{!live && <div className="wallet-preview"><Receipt size={20} /><p><strong>Wallet design preview</strong> This sample balance and history are separate from your checkout and order previews.</p><label><input type="checkbox" checked={empty} onChange={e => setEmpty(e.target.checked)} /> Preview empty wallet</label></div>}
-      {error && <p className="error" role="alert">{error}</p>}{loading && <WalletSkeleton />}{live && !signedIn && !loading && <button className="primary" onClick={() => setSignInOpen(true)}>Sign in to view wallet <ArrowRight size={18} /></button>}<div className="wallet-heading"><span className="eyebrow">READY FOR YOUR NEXT MEAL</span><h1>Your wallet.</h1><p>Refund credit, ready whenever you are.</p></div>
-      <div className="wallet-overview"><section className="wallet-balance" aria-labelledby="balance-title"><div className="wallet-balance-label"><Wallet size={23} /><h2 id="balance-title">Available credit</h2><span>{live ? "Your balance" : "Sample balance"}</span></div><p className="wallet-balance-value">{money(balance)}</p><p>Use your credit towards meals, extras and delivery at checkout.</p><Link href="/" className="primary">Find your next meal <ArrowRight size={19} /></Link><span className="wallet-expiry"><Clock size={17} /> Your credit never expires</span></section>
-      <aside className="wallet-explainer"><span className="eyebrow muted">A LITTLE MORE ABOUT YOUR CREDIT</span><h2>Good food, another day.</h2><p>When you cancel before a delivery’s cutoff, your refund comes back here as meal credit.</p><ul><li><Check size={18} />Use credit on your next order.</li><li><Check size={18} />Pay any remaining amount at checkout.</li><li><Check size={18} />Keep unused credit for another day.</li></ul><p className="wallet-cash-note">Wallet credit cannot be withdrawn or converted to cash.</p></aside></div>
-      <section className="wallet-history" aria-labelledby="history-title"><div className="wallet-history-heading"><div><h2 id="history-title">Wallet activity</h2><p>Every refund and every meal it helped pay for.</p></div><span>{shown.length} {shown.length === 1 ? "transaction" : "transactions"}</span></div><div className="orders-tabs" aria-label="Filter wallet activity">{["All activity", "Refunds", "Credit used"].map(tab => <button aria-pressed={filter === tab} onClick={() => setFilter(tab)} key={tab}>{tab}</button>)}</div>
-      {shown.length ? <div className="wallet-transactions">{shown.map(entry => <button className="wallet-transaction" key={entry.id} onClick={() => setSelected(entry)} aria-label={`View transaction ${entry.id}`}><span className={`wallet-transaction-icon ${entry.amount > 0 ? "credit" : ""}`}>{entry.amount > 0 ? <ArrowDownLeft size={23} /> : <ArrowUpRight size={23} />}</span><span className="wallet-transaction-copy"><strong>{entry.title}</strong><span>{entry.date}</span><small>{entry.delivery} · Completed</small></span><span className={`wallet-transaction-amount ${entry.amount > 0 ? "credit" : ""}`}>{entry.amount > 0 ? "+" : "−"}{money(Math.abs(entry.amount))}<small>Balance: {money(entry.balance)}</small></span><ArrowRight className="wallet-row-arrow" size={19} /></button>)}</div> : <div className="wallet-empty"><Wallet size={40} weight="light" /><h3>Your wallet starts here.</h3><p>Refunds and credit used on orders will appear here. You can still order and pay at checkout.</p><Link href="/">Explore the menu <ArrowRight size={18} /></Link></div>}
-      </section><div className="wallet-faq"><h2>A few useful details</h2><details><summary>How do I use my credit?</summary><p>Choose wallet credit at checkout. It reduces your order total, including extras and delivery. If credit covers the whole total, no additional payment is needed.</p></details><details><summary>When can I cancel a delivery?</summary><p>You can cancel before that delivery batch’s cutoff. After the cutoff, ordering, cancellation and address changes are closed.</p></details><details><summary>What if PreChop cancels my delivery?</summary><p>We’ll contact you directly. You can choose wallet credit or a refund to the original payment method for the amount paid through it. Any portion paid with wallet credit returns to your wallet.</p></details></div>
-      {selected && <Transaction entry={selected} close={() => setSelected(null)} sample={!live} />}
-    </main>{signInOpen && <SignInDialog close={() => setSignInOpen(false)} complete={() => { setSignInOpen(false); window.location.reload(); }} />}</>;
+  const shown = entriesForView.filter(
+    (entry) => filter === "All activity" || (filter === "Refunds" ? entry.amount > 0 : entry.amount < 0)
+  );
+
+  return (
+    <>
+      <main className="wallet-shell">
+        {!live && (
+          <div className="wallet-preview">
+            <Receipt size={20} />
+            <p><strong>Wallet design preview</strong> This sample balance and history are separate from your checkout and order previews.</p>
+            <label>
+              <input type="checkbox" checked={empty} onChange={(e) => setEmpty(e.target.checked)} /> Preview empty wallet
+            </label>
+          </div>
+        )}
+
+        {error && <p className="error" role="alert">{error}</p>}
+        {loading && <WalletSkeleton />}
+        {live && !signedIn && !loading && (
+          <button className="primary" onClick={() => setSignInOpen(true)}>
+            Sign in to view wallet <ArrowRight size={18} />
+          </button>
+        )}
+
+        <div className="wallet-heading">
+          <span className="eyebrow">READY FOR YOUR NEXT MEAL</span>
+          <h1>Your wallet.</h1>
+          <p>Refunds and referral rewards, ready whenever you are.</p>
+        </div>
+
+        <div className="wallet-overview">
+          <section className="wallet-balance" aria-labelledby="balance-title">
+            <div>
+              <div className="wallet-balance-label">
+                <Wallet size={22} />
+                <h2 id="balance-title">Available credit</h2>
+                <span>{live ? "Your balance" : "Sample balance"}</span>
+              </div>
+              <p className="wallet-balance-value">{money(balance)}</p>
+              <p>Use your credit towards meals, extras and delivery at checkout.</p>
+            </div>
+            <div>
+              <Link href="/" className="primary">Find your next meal <ArrowRight size={19} /></Link>
+              <span className="wallet-expiry"><Clock size={16} /> Your credit never expires</span>
+            </div>
+          </section>
+
+          <aside className="wallet-explainer">
+            <div>
+              <span className="eyebrow muted">A LITTLE MORE ABOUT YOUR CREDIT</span>
+              <h2>Good food, another day.</h2>
+              <p>When you cancel before a cutoff or earn rewards from referring friends, your balance is stored here as meal credit.</p>
+              <ul>
+                <li><Check size={18} /> Use credit on your next order.</li>
+                <li><Check size={18} /> Includes order refunds and referral reward bonuses.</li>
+                <li><Check size={18} /> Pay any remaining balance at checkout.</li>
+                <li><Check size={18} /> Keep unused credit for another day.</li>
+              </ul>
+            </div>
+            <p className="wallet-cash-note">Wallet credit cannot be withdrawn or converted to cash.</p>
+          </aside>
+        </div>
+
+        <section className="wallet-history" aria-labelledby="history-title">
+          <div className="wallet-history-heading">
+            <div>
+              <h2 id="history-title">Wallet activity</h2>
+              <p>Every refund, referral reward, and meal it helped pay for.</p>
+            </div>
+            <span>{shown.length} {shown.length === 1 ? "transaction" : "transactions"}</span>
+          </div>
+
+          <div className="orders-tabs" aria-label="Filter wallet activity">
+            {["All activity", "Refunds", "Credit used"].map((tab) => (
+              <button aria-pressed={filter === tab} onClick={() => setFilter(tab)} key={tab}>
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {shown.length ? (
+            <div className="wallet-transactions">
+              {shown.map((entry) => (
+                <button
+                  className="wallet-transaction"
+                  key={entry.id}
+                  onClick={() => setSelected(entry)}
+                  aria-label={`View transaction ${entry.id}`}
+                >
+                  <span className={`wallet-transaction-icon ${entry.amount > 0 ? "credit" : ""}`}>
+                    {entry.amount > 0 ? <ArrowDownLeft size={22} /> : <ArrowUpRight size={22} />}
+                  </span>
+                  <span className="wallet-transaction-copy">
+                    <strong>{entry.title}</strong>
+                    <span>{entry.date}</span>
+                    <small>{entry.delivery} · Completed</small>
+                  </span>
+                  <span className={`wallet-transaction-amount ${entry.amount > 0 ? "credit" : ""}`}>
+                    {entry.amount > 0 ? "+" : "−"}{money(Math.abs(entry.amount))}
+                    <small>Balance: {money(entry.balance)}</small>
+                  </span>
+                  <ArrowRight className="wallet-row-arrow" size={18} />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="wallet-empty">
+              <div className="wallet-empty-icon">
+                <Wallet size={30} weight="regular" />
+              </div>
+              <h3>Your wallet starts here.</h3>
+              <p>Refunds and referral reward credits will appear here automatically. You can always order and pay directly at checkout.</p>
+              <div className="wallet-empty-actions">
+                <Link href="/" className="primary">
+                  Explore the menu <ArrowRight size={18} />
+                </Link>
+                <Link href="/campaign" className="wallet-referral-cta">
+                  <Gift size={18} /> Earn credit with referrals
+                </Link>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <div className="wallet-faq">
+          <h2>A few useful details</h2>
+          <details>
+            <summary>
+              <span>How do I use my credit?</span>
+              <CaretDown size={18} className="faq-chevron" />
+            </summary>
+            <p>Choose wallet credit at checkout. It reduces your order total, including extras and delivery. If credit covers the whole total, no additional payment is needed.</p>
+          </details>
+
+          <details>
+            <summary>
+              <span>Can I top up or fund my wallet directly?</span>
+              <CaretDown size={18} className="faq-chevron" />
+            </summary>
+            <p>PreChop wallet currently stores meal credits from cancelled deliveries and referral rewards. Direct card deposits are not needed because you can pay any remaining order balance directly at checkout via card or bank transfer.</p>
+          </details>
+
+          <details>
+            <summary>
+              <span>When can I cancel a delivery?</span>
+              <CaretDown size={18} className="faq-chevron" />
+            </summary>
+            <p>You can cancel before that delivery batch’s cutoff. After the cutoff, ordering, cancellation and address changes are closed.</p>
+          </details>
+
+          <details>
+            <summary>
+              <span>What if PreChop cancels my delivery?</span>
+              <CaretDown size={18} className="faq-chevron" />
+            </summary>
+            <p>We’ll contact you directly. You can choose wallet credit or a refund to the original payment method for the amount paid through it. Any portion paid with wallet credit returns to your wallet.</p>
+          </details>
+        </div>
+
+        {selected && <Transaction entry={selected} close={() => setSelected(null)} sample={!live} />}
+      </main>
+
+      {signInOpen && (
+        <SignInDialog
+          close={() => setSignInOpen(false)}
+          complete={() => {
+            setSignInOpen(false);
+            window.location.reload();
+          }}
+        />
+      )}
+    </>
+  );
 }

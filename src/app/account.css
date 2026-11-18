@@ -1,11 +1,589 @@
-.account-shell { max-width: 1200px; width: 100%; margin: auto; padding: 40px 56px 100px; }
-.account-preview { display: flex; gap: 13px; padding: 20px; background: #f5eee3; color: #6c614e; border-radius: 6px; font-size: 14px; }.account-preview>svg { margin-top: 3px; }.account-preview strong { display: block; margin-bottom: 3px; }
-.account-heading { margin: 48px 0 38px; }.account-heading h1 { font-size: 56px; margin: 15px 0; line-height: 1.15; }.account-heading>p { color: var(--muted); font-size: 18px; }
-.account-profile { border: 1px solid var(--line); border-radius: 8px; padding: 32px; background: #fffefa; }.account-profile-heading { display: flex; gap: 20px; align-items: center; margin-bottom: 30px; }.account-avatar { color: var(--orange); background: #f7e8da; border-radius: 50%; padding: 14px; }.account-profile h2,.account-section-heading h2 { font-size: 32px; }.account-profile-heading p { color: var(--muted); margin-top: 7px; font-size: 16px; }.account-profile-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 0; border-top: 1px solid var(--line); }.account-profile-row>div { display: grid; gap: 6px; }.account-profile-row span,.account-profile-row small { color: var(--muted); font-size: 14px; }.account-profile-row strong { font-size: 19px; font-weight: 500; overflow-wrap: anywhere; }.account-profile-row button { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--orange); min-height: 44px; flex-shrink: 0; }
-.account-addresses { margin-top: 65px; }.account-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 28px; margin-bottom: 30px; }.account-section-heading p { font-size: 16px; color: var(--muted); margin-top: 10px; max-width: 590px; }.account-section-heading .primary { width: auto; white-space: nowrap; }
-.address-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 25px; }.address-card { padding: 28px; border: 1px solid var(--line); border-radius: 8px; background: #fffefa; display: flex; flex-direction: column; }.address-card-heading { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }.address-card-heading>svg { color: var(--orange); }.address-card-heading h3 { font: 26px Georgia,serif; overflow-wrap: anywhere; }.address-card-heading>span { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: 12px; color: #346538; background: #edf3ec; border-radius: 4px; padding: 5px 9px; }.address-area { color: var(--muted); font-size: 14px; margin: 22px 0 10px; }.address-card>p { font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }.address-card .address-note { color: var(--muted); font-size: 14px; margin-top: 10px; }.address-fee { display: flex; justify-content: space-between; gap: 15px; font-size: 14px; margin-top: auto; padding-top: 28px; }.address-actions { display: flex; gap: 22px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 17px; margin-top: 22px; }.address-actions button { display: flex; align-items: center; gap: 6px; color: var(--orange); font-size: 14px; min-height: 42px; }.address-actions button:last-child { margin-left: auto; color: var(--muted); }.account-address-hint { font-size: 14px; color: var(--muted); margin-top: 25px; max-width: 750px; line-height: 1.8; }
-.account-links { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; border-top: 1px solid var(--line); margin-top: 50px; padding-top: 30px; }.account-links a { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 0; }.account-links strong { display: block; font-size: 18px; font-weight: 500; }.account-links small { display: block; color: var(--muted); font-size: 14px; margin-top: 6px; }.account-links svg { color: var(--orange); }
-.account-notice { display: flex; align-items: flex-start; gap: 10px; padding: 20px; border-radius: 6px; color: #346538; background: #edf3ec; margin-top: 24px; font-size: 15px; }.account-empty { text-align: center; padding: 50px 24px; border: 1px dashed var(--line); border-radius: 6px; }.account-empty>svg { margin: auto; color: var(--orange); }.account-empty h3 { font: 28px Georgia,serif; margin: 22px 0 14px; }.account-empty p { color: var(--muted); }
-.account-dialog { width: min(560px,calc(100% - 24px)); padding: 38px; }.account-dialog h2 { font-size: 34px; margin: 16px 25px 20px 0; }.account-dialog-intro { color: var(--muted); font-size: 16px; line-height: 1.8; margin-bottom: 24px; }.account-form { display: grid; gap: 22px; }.account-form>label { display: grid; gap: 10px; font-size: 16px; }.account-form>label>span { color: var(--muted); font-size: 14px; }.account-form input,.account-form textarea,.account-form select { width: 100%; font: inherit; font-size: 16px; padding: 13px; min-height: 48px; border: 1px solid #bdc2b7; border-radius: 5px; background: #fffefa; color: var(--foreground); }.account-form textarea { resize: vertical; }.account-fee { display: flex; justify-content: space-between; gap: 15px; font-size: 15px; padding: 18px 0; border-top: 1px solid var(--line); }.account-dialog-note { font-size: 14px; color: var(--muted); line-height: 1.8; margin-bottom: 22px; }
-@media(max-width:800px) { .account-shell { padding: 30px; }.address-grid { grid-template-columns: 1fr; }.account-section-heading { align-items: flex-start; flex-direction: column; }.account-links { grid-template-columns: 1fr; gap: 10px; } }
-@media(max-width:600px) { .account-shell { padding: 24px 20px 65px; }.account-header { flex-wrap: wrap; height: auto; min-height: 125px; padding-block: 15px; gap: 14px; }.account-header nav { display: flex; height: auto; gap: 24px; font-size: 15px; }.account-heading { margin-top: 36px; }.account-heading h1 { font-size: 44px; }.account-heading>p { font-size: 16px; }.account-profile { padding: 24px; }.account-profile-heading { align-items: flex-start; gap: 14px; }.account-avatar { padding: 8px; }.account-avatar svg { width: 30px; height: 30px; }.account-profile h2,.account-section-heading h2 { font-size: 29px; }.account-profile-row { align-items: flex-start; }.address-card { padding: 24px; }.account-dialog { padding: 32px 24px; }.account-addresses { margin-top: 46px; } }
+.account-shell {
+  max-width: 1200px;
+  width: 100%;
+  margin: auto;
+  padding: 40px 56px 100px;
+}
+
+.account-preview {
+  display: flex;
+  gap: 13px;
+  padding: 18px 20px;
+  background: #f5eee3;
+  color: #6c614e;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.account-preview > svg {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.account-preview strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.account-heading {
+  margin: 40px 0 32px;
+}
+.account-heading .eyebrow {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+.account-heading h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(34px, 4.2vw, 48px);
+  margin: 12px 0 8px;
+  line-height: 1.15;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--foreground);
+}
+.account-heading > p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.account-profile {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 32px;
+  background: #fffefa;
+}
+.account-profile-heading {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 26px;
+}
+.account-avatar {
+  color: var(--orange);
+  background: #f7e8da;
+  border-radius: 50%;
+  padding: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.account-profile h2,
+.account-section-heading h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(24px, 2.5vw, 28px);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.account-profile-heading p {
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.account-profile .primary {
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 22px;
+  min-height: 46px;
+}
+
+.account-profile-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+.account-profile-row > div {
+  display: grid;
+  gap: 5px;
+}
+.account-profile-row span {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.account-profile-row small {
+  color: var(--muted);
+  font-size: 13px;
+}
+.account-profile-row strong {
+  font-size: 17px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.account-profile-row button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--orange);
+  min-height: 40px;
+  flex-shrink: 0;
+}
+
+.account-addresses {
+  margin-top: 56px;
+}
+.account-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+.account-section-heading p {
+  font-size: 15px;
+  color: var(--muted);
+  margin-top: 8px;
+  max-width: 590px;
+  line-height: 1.5;
+}
+.account-section-heading .primary {
+  width: auto;
+  white-space: nowrap;
+  font-size: 14.5px;
+  padding: 10px 18px;
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.address-card {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffefa;
+  display: flex;
+  flex-direction: column;
+}
+.address-card-heading {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.address-card-heading > svg {
+  color: var(--orange);
+}
+.address-card-heading h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.address-card-heading > span {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #346538;
+  background: #edf3ec;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+.address-area {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin: 18px 0 8px;
+}
+.address-card > p {
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.address-card .address-note {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin-top: 8px;
+}
+.address-fee {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 13.5px;
+  margin-top: auto;
+  padding-top: 24px;
+}
+.address-fee strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+.address-actions {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 20px;
+}
+.address-actions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--orange);
+  font-size: 14px;
+  min-height: 40px;
+}
+.address-actions button:last-child {
+  margin-left: auto;
+  color: var(--muted);
+}
+.account-address-hint {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 22px;
+  max-width: 750px;
+  line-height: 1.7;
+}
+
+.account-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  border-top: 1px solid var(--line);
+  margin-top: 48px;
+  padding-top: 28px;
+}
+.account-links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+}
+.account-links strong {
+  display: block;
+  font-size: 16.5px;
+  font-weight: 500;
+}
+.account-links small {
+  display: block;
+  color: var(--muted);
+  font-size: 13.5px;
+  margin-top: 5px;
+}
+.account-links svg {
+  color: var(--orange);
+}
+
+.account-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 8px;
+  color: #346538;
+  background: #edf3ec;
+  margin-top: 20px;
+  font-size: 14.5px;
+}
+.account-empty {
+  text-align: center;
+  padding: 44px 22px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+.account-empty > svg {
+  margin: auto;
+  color: var(--orange);
+}
+.account-empty h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin: 18px 0 10px;
+}
+.account-empty p {
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.account-dialog {
+  width: min(540px, calc(100% - 24px));
+  padding: 34px;
+  border-radius: 12px;
+}
+.account-dialog .eyebrow {
+  font-size: 11.5px;
+  letter-spacing: 1.4px;
+}
+.account-dialog h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  margin: 12px 24px 16px 0;
+}
+.account-dialog-intro {
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.account-form {
+  display: grid;
+  gap: 18px;
+}
+.account-form > label {
+  display: grid;
+  gap: 8px;
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.account-form > label > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+.account-form input,
+.account-form textarea,
+.account-form select {
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  padding: 12px;
+  min-height: 46px;
+  border: 1px solid #bdc2b7;
+  border-radius: 6px;
+  background: #fffefa;
+  color: var(--foreground);
+}
+.account-form textarea {
+  resize: vertical;
+}
+.account-fee {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 14.5px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.account-dialog-note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 800px) {
+  .account-shell {
+    padding: 30px 24px 70px;
+  }
+  .address-grid {
+    grid-template-columns: 1fr;
+  }
+  .account-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .account-links {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .account-shell {
+    padding: 20px 16px 56px;
+  }
+  .account-heading {
+    margin: 22px 0 18px;
+  }
+  .account-heading .eyebrow {
+    font-size: 11px;
+    letter-spacing: 1.3px;
+    font-weight: 600;
+  }
+  .account-heading h1 {
+    font-size: clamp(25px, 6.8vw, 30px);
+    line-height: 1.18;
+    margin: 8px 0 6px;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+  }
+  .account-heading > p {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .account-profile {
+    padding: 20px 16px;
+    border-radius: 10px;
+  }
+  .account-profile-heading {
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .account-avatar {
+    padding: 7px;
+  }
+  .account-avatar svg {
+    width: 26px;
+    height: 26px;
+  }
+  .account-profile h2,
+  .account-section-heading h2 {
+    font-size: clamp(19px, 5vw, 21px);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+  .account-profile-heading p {
+    font-size: 13.5px;
+    line-height: 1.42;
+    margin-top: 4px;
+  }
+  .account-profile .primary {
+    font-size: 14.5px;
+    font-weight: 500;
+    min-height: 44px;
+    padding: 11px 18px;
+  }
+  .account-profile-row {
+    align-items: flex-start;
+    padding: 14px 0;
+  }
+  .account-profile-row strong {
+    font-size: 15.5px;
+  }
+  .account-profile-row span,
+  .account-profile-row small {
+    font-size: 12.5px;
+  }
+  .account-profile-row button {
+    font-size: 13.5px;
+    min-height: 36px;
+  }
+  .account-addresses {
+    margin-top: 40px;
+  }
+  .account-section-heading {
+    margin-bottom: 18px;
+  }
+  .account-section-heading p {
+    font-size: 13.5px;
+    margin-top: 4px;
+  }
+  .account-section-heading .primary {
+    font-size: 14px;
+    padding: 9px 16px;
+  }
+  .address-card {
+    padding: 18px 16px;
+    border-radius: 10px;
+  }
+  .address-card-heading h3 {
+    font-size: 18px;
+    line-height: 1.28;
+  }
+  .address-area {
+    font-size: 12.5px;
+    margin: 12px 0 6px;
+  }
+  .address-card > p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .address-card .address-note {
+    font-size: 12.5px;
+    margin-top: 6px;
+  }
+  .address-fee {
+    font-size: 13px;
+    padding-top: 16px;
+  }
+  .address-fee strong {
+    font-size: 14px;
+  }
+  .address-actions {
+    padding-top: 12px;
+    margin-top: 14px;
+    gap: 14px;
+  }
+  .address-actions button {
+    font-size: 13px;
+    min-height: 36px;
+  }
+  .account-address-hint {
+    font-size: 13px;
+    line-height: 1.55;
+    margin-top: 16px;
+  }
+  .account-empty {
+    padding: 28px 16px;
+  }
+  .account-empty h3 {
+    font-size: 18px;
+    margin: 12px 0 6px;
+    line-height: 1.3;
+  }
+  .account-empty p {
+    font-size: 13.5px;
+  }
+  .account-links {
+    margin-top: 32px;
+    padding-top: 16px;
+    gap: 6px;
+  }
+  .account-links a {
+    padding: 10px 0;
+  }
+  .account-links strong {
+    font-size: 15px;
+  }
+  .account-links small {
+    font-size: 12.5px;
+    margin-top: 3px;
+  }
+  .account-dialog {
+    padding: 24px 18px;
+  }
+  .account-dialog .eyebrow {
+    font-size: 11px;
+  }
+  .account-dialog h2 {
+    font-size: 20px;
+    margin: 8px 16px 12px 0;
+    line-height: 1.25;
+  }
+  .account-dialog-intro {
+    font-size: 13.5px;
+    margin-bottom: 16px;
+  }
+  .account-form {
+    gap: 14px;
+  }
+  .account-form > label {
+    font-size: 13.5px;
+    gap: 6px;
+  }
+  .account-form input,
+  .account-form textarea,
+  .account-form select {
+    font-size: 14.5px;
+    padding: 10px 11px;
+    min-height: 42px;
+  }
+  .account-fee {
+    font-size: 13.5px;
+    padding: 12px 0;
+  }
+  .account-dialog-note {
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+}
