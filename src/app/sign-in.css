@@ -276,7 +276,14 @@
     width: calc(100% - 24px);
   }
   .sign-in-modal h2 {
-    font-size: 34px;
+    font-size: clamp(21px, 5.5vw, 24px);
+    line-height: 1.25;
+    margin: 10px 0 12px;
+    font-weight: 400;
+  }
+  .signin-intro {
+    font-size: 14px;
+    line-height: 1.5;
   }
   .signin-progress {
     gap: 10px;

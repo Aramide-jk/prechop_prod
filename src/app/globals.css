@@ -986,7 +986,10 @@ svg {
     align-items: end;
   }
   .section-heading h2 {
-    font-size: 29px;
+    font-size: clamp(21px, 5.5vw, 24px);
+    line-height: 1.25;
+    font-weight: 400;
+    letter-spacing: -0.025em;
   }
   .section-heading .eyebrow {
     font-size: 12px;
@@ -1084,7 +1087,10 @@ svg {
     width: calc(100% - 24px);
   }
   .modal h2 {
-    font-size: 29px;
+    font-size: clamp(20px, 5.2vw, 23px);
+    line-height: 1.25;
+    font-weight: 400;
+    letter-spacing: -0.02em;
   }
   .modal-tabs {
     gap: 24px;

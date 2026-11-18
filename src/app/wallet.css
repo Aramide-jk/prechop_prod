@@ -465,9 +465,24 @@
     gap: 8px;
     margin-bottom: 16px;
   }
+  .wallet-heading .eyebrow {
+    font-size: 11px;
+    letter-spacing: 1.3px;
+    font-weight: 600;
+  }
   .wallet-history h2,
   .wallet-faq h2 {
-    font-size: 22px;
+    font-size: clamp(20px, 5.2vw, 22px);
+    line-height: 1.25;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .wallet-empty h3 {
+    font-size: clamp(18px, 4.8vw, 20px);
+    line-height: 1.28;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
   }
   .wallet-history .orders-tabs {
     gap: 18px;
