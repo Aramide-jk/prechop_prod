@@ -229,7 +229,7 @@ export function Checkout() {
           cutoff: batch.cutoff_time.slice(0, 5),
         });
       }
-      setSlotCatalog(liveSlots);
+      if (liveSlots.Breakfast.length || liveSlots.Lunch.length || liveSlots.Dinner.length) setSlotCatalog(liveSlots);
       type MenuRow = {
         service_date: string;
         slug: string;
@@ -314,8 +314,8 @@ export function Checkout() {
       }
       const liveMeals = [...menuBySlug.values()];
       const liveAddons = [...addonsBySlug.values()];
-      setCheckoutMeals(liveMeals);
-      setCheckoutAddons(liveAddons);
+      if (liveMeals.length > 0) setCheckoutMeals(liveMeals);
+      if (liveAddons.length > 0) setCheckoutAddons(liveAddons);
 
       // Determine earliest available upcoming date & open window for featured campaign meal claim
       const targetMeal = liveMeals.find(
@@ -346,8 +346,8 @@ export function Checkout() {
       try {
         initialCart = readCart(
           localStorage.getItem("mealhr-cart-v1"),
-          liveMeals,
-          liveAddons,
+          liveMeals.length > 0 ? liveMeals : meals,
+          liveAddons.length > 0 ? liveAddons : addons,
         ).filter((plate) => upcomingDates().includes(plate.date));
       } catch {
         initialCart = [];

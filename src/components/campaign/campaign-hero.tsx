@@ -14,7 +14,7 @@ import { money } from "@/lib/menu";
 type CampaignHeroProps = {
   inviteUrl: string;
   rewardPerReferralNgn: number;
-  featuredMealImage?: string;
+  bannerImage?: string;
   featuredGoalEnabled?: boolean;
   signedIn?: boolean;
   inviteExpanded: boolean;
@@ -28,7 +28,7 @@ type CampaignHeroProps = {
 export function CampaignHero({
   inviteUrl,
   rewardPerReferralNgn,
-  featuredMealImage = "/images/jollof.png",
+  bannerImage = "/images/open-prechop-box.png",
   featuredGoalEnabled = true,
   signedIn = true,
   inviteExpanded,
@@ -174,12 +174,12 @@ export function CampaignHero({
         </svg>
         <div className="cp-hero-plate">
           <Image
-            src={featuredMealImage || "/images/jollof.png"}
-            alt=""
+            src={bannerImage || "/images/open-prechop-box.png"}
+            alt="PreChop Meal Box"
             fill
             sizes="(max-width: 640px) 190px, 280px"
             className="cp-hero-plate-img"
-            unoptimized={featuredMealImage.startsWith("http")}
+            unoptimized={typeof bannerImage === "string" && bannerImage.startsWith("http")}
             priority
           />
         </div>

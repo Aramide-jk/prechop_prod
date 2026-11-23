@@ -162,7 +162,9 @@
   border: 0;
   outline: 0;
   background: transparent;
-  font: 12.5px/1.35 var(--font-geist-mono), monospace;
+  font:
+    12.5px/1.35 var(--font-geist-mono),
+    monospace;
   color: #22261e;
 }
 

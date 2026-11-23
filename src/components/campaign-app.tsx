@@ -88,24 +88,26 @@ export function CampaignApp() {
           .eq("referrer_id", user.id),
       ]);
 
-      const walletBalance = ((walletRes.data ?? []) as { amount_ngn: number }[]).reduce(
-        (acc, row) => acc + row.amount_ngn,
-        0,
-      );
+      const walletBalance = (
+        (walletRes.data ?? []) as { amount_ngn: number }[]
+      ).reduce((acc, row) => acc + row.amount_ngn, 0);
       const referrals = (refRes.data ?? []) as {
         id: string;
         status: "pending" | "qualified";
         qualified_at: string | null;
         created_at: string;
       }[];
-      const qualifiedCount = referrals.filter((r) => r.status === "qualified").length;
+      const qualifiedCount = referrals.filter(
+        (r) => r.status === "qualified",
+      ).length;
       const evalFallback = evaluateCampaignGoalProgress({
         unlockRule: liveSettings.featured_unlock_rule,
         claimBehavior: liveSettings.featured_claim_behavior,
         targetReferrals: liveSettings.featured_target_referrals,
         targetCreditNgn: liveSettings.featured_target_credit_ngn,
         qualifiedReferrals: qualifiedCount,
-        accumulatedCreditNgn: qualifiedCount * liveSettings.reward_per_referral_ngn,
+        accumulatedCreditNgn:
+          qualifiedCount * liveSettings.reward_per_referral_ngn,
       });
 
       setSummary({
@@ -113,9 +115,11 @@ export function CampaignApp() {
         full_name: profileRes.data?.full_name ?? "Customer",
         wallet_balance_ngn: Math.max(0, walletBalance),
         link_visits: 0,
-        pending_referrals: referrals.filter((r) => r.status === "pending").length,
+        pending_referrals: referrals.filter((r) => r.status === "pending")
+          .length,
         qualified_referrals: qualifiedCount,
-        accumulated_campaign_credit_ngn: qualifiedCount * liveSettings.reward_per_referral_ngn,
+        accumulated_campaign_credit_ngn:
+          qualifiedCount * liveSettings.reward_per_referral_ngn,
         referrals: [],
         is_unlocked: evalFallback.isUnlocked,
         unlocked_at: null,
@@ -155,7 +159,7 @@ export function CampaignApp() {
     const origin =
       typeof window !== "undefined"
         ? window.location.origin
-        : "https://prechop.com";
+        : "https://prechop.com.ng";
     return inviteCode ? buildCampaignInviteUrl(origin, inviteCode) : "";
   }, [inviteCode]);
 
@@ -177,11 +181,16 @@ export function CampaignApp() {
     [activeSettings, qualifiedReferrals, accumulatedCreditNgn],
   );
 
-  const effectiveClaimStatus: CampaignClaimStatus = !activeSettings.featured_goal_enabled
-    ? "disabled"
-    : summary?.claim_status ?? (goalEvaluation.isUnlocked ? "unlocked" : "locked");
+  const effectiveClaimStatus: CampaignClaimStatus =
+    !activeSettings.featured_goal_enabled
+      ? "disabled"
+      : (summary?.claim_status ??
+        (goalEvaluation.isUnlocked ? "unlocked" : "locked"));
 
-  const steps = useMemo(() => buildCampaignSteps(activeSettings), [activeSettings]);
+  const steps = useMemo(
+    () => buildCampaignSteps(activeSettings),
+    [activeSettings],
+  );
   const benefits = useMemo(
     () => buildCampaignBenefits(activeSettings),
     [activeSettings],
@@ -257,12 +266,18 @@ export function CampaignApp() {
   return (
     <main className="cp-shell">
       {loading ? (
-        <div className="skeleton-campaign" aria-label="Loading campaign details">
+        <div
+          className="skeleton-campaign"
+          aria-label="Loading campaign details"
+        >
           <div className="skeleton skeleton-campaign-art" />
           <div className="skeleton skeleton-campaign-progress" />
         </div>
       ) : !campaignIsLive ? (
-        <section className="cp-paused-card" aria-label="Campaign availability status">
+        <section
+          className="cp-paused-card"
+          aria-label="Campaign availability status"
+        >
           <span className="cp-paused-icon" aria-hidden="true">
             <Gift size={28} weight="regular" />
           </span>
@@ -295,7 +310,7 @@ export function CampaignApp() {
           <CampaignHero
             inviteUrl={inviteUrl}
             rewardPerReferralNgn={activeSettings.reward_per_referral_ngn}
-            featuredMealImage={activeSettings.featured_meal_image}
+            bannerImage="/images/open-prechop-box.png"
             featuredGoalEnabled={activeSettings.featured_goal_enabled}
             signedIn={effectiveSignedIn}
             inviteExpanded={inviteExpanded}

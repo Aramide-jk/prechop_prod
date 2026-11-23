@@ -114,12 +114,12 @@ export function MenuApp({
 }) {
   const liveMenu = menuData !== null;
   const catalogMeals = useMemo(
-    () => menuData?.meals ?? (liveConfigured ? [] : meals),
-    [liveConfigured, menuData?.meals],
+    () => (menuData?.meals && menuData.meals.length > 0 ? menuData.meals : meals),
+    [menuData],
   );
   const catalogAddons = useMemo(
-    () => menuData?.addons ?? (liveConfigured ? [] : addons),
-    [liveConfigured, menuData?.addons],
+    () => (menuData?.addons && menuData.addons.length > 0 ? menuData.addons : addons),
+    [menuData],
   );
 
   const [dates, setDates] = useState<string[]>([]);
@@ -206,10 +206,10 @@ export function MenuApp({
     0,
   );
   const visibleMealIds = liveMenu
-    ? (menuData?.availability[`${date}|${windowName}`] ?? [])
-    : liveConfigured
-      ? []
-      : catalogMeals.map((meal) => meal.id);
+    ? (menuData?.availability[`${date}|${windowName}`] ?? catalogMeals.map((meal) => meal.id))
+    : catalogMeals.map((meal) => meal.id);
+
+
   const visibleMeals = catalogMeals.filter(
     (meal) =>
       visibleMealIds.includes(meal.id) &&
